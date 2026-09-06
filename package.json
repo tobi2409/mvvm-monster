@@ -1,7 +1,7 @@
 {
-    "name": "@tobi2409/template-engine",
+    "name": "@tobi2409/mvvm-monster",
     "version": "0.9.11",
-    "description": "Lightweight MVVM template engine with declarative HTML tags, reactive dependency mapping, and mapped-array support",
+    "description": "Lightweight reactive MVVM framework for declarative HTML and synchronized model/view-model collections",
     "license": "MIT",
     "type": "module",
     "main": "./src/template-engine.js",
@@ -10,6 +10,7 @@
         "./viewmodel-array": "./src/viewmodel-array.js",
         "./model-journal": "./src/model-journal.js",
         "./model-viewmodel-expander": "./src/model-viewmodel-expander.js",
+        "./paginator": "./src/paginator.js",
         "./array-helpers": "./src/array-helpers.js"
     },
     "files": [
@@ -17,9 +18,10 @@
         "README.md"
     ],
     "keywords": [
+        "mvvm-monster",
+        "mvvm",
         "template-engine",
         "reactive",
-        "mvvm",
         "frontend",
         "declarative",
         "data-binding",

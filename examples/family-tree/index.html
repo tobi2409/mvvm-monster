@@ -42,7 +42,7 @@
                 </each>
 
                 <if test="*list.state.hasMore">
-                    <button action-click="*list.state.loadNextData">Load Next Data</button>
+                    <button action-click="*list.state.loadNextPage">Load Next Data</button>
                 </if>
 
                 <li>
@@ -62,6 +62,7 @@
                 data-list="persons"></template-use>
 
             <br />
+            <button action-click="saveChanges">Save Changes to Server</button>
             <button action-click="logModels">Log Models</button>
         </template>
 

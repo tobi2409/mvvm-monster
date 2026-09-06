@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="de">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Pagination mit einem Model</title>
+    <link rel="stylesheet" href="index.css" />
+</head>
+<body>
+    <main id="app"></main>
+
+    <template id="page-template">
+        <header>
+            <p class="eyebrow">Pagination Demo</p>
+            <h1>Eine Liste, ein Model</h1>
+        </header>
+
+        <div class="toolbar">
+            <input type="search" bind-input-value="searchInput" placeholder="Einträge suchen ..." />
+            <button action-click="search">Suchen</button>
+            <button class="secondary" action-click="clearSearch">Zurücksetzen</button>
+        </div>
+
+        <p class="status"><get>items.length</get> Einträge geladen</p>
+
+        <ul class="item-list">
+            <each of="items" as="item">
+                <li>
+                    <span class="item-id">#<get>item.id</get></span>
+                    <strong><get>item.name</get></strong>
+                </li>
+            </each>
+        </ul>
+
+        <if test="paginator.loading">
+            <p class="loading">Daten werden geladen ...</p>
+        </if>
+
+        <if test="paginator.hasMore">
+            <button class="load-more" action-click="loadNextPage">Nächste Seite laden</button>
+        </if>
+    </template>
+
+    <template-use id="page-use" template-id="page-template" mount-id="app"></template-use>
+
+    <script type="module" src="index.js"></script>
+</body>
+</html>

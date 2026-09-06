@@ -4,6 +4,10 @@ import assert from 'node:assert/strict'
 import ModelViewModelExpander from '../src/model-viewmodel-expander.js'
 import JournalControl from '../src/components/reactivity-helpers/journal-control.js'
 
+function setTransform(viewModelArrayData, transform) {
+    Object.defineProperty(viewModelArrayData, '__transform__', { value: transform })
+}
+
 test('getExpandTargets returns root arrays when no parent item exists', () => {
     const rootModelArray = [{ id: 1, children: [] }]
     const rootViewModelArray = [{ id: 1, children: [] }]
@@ -30,15 +34,15 @@ test('expandNextData replaces model and view model arrays', () => {
     const modelArray = [{ id: 1, name: 'old' }]
     const viewModelArray = [{ id: 1, name: 'OLD' }]
     const nextData = [{ id: 2, name: 'beta' }, { id: 3, name: 'gamma' }]
+    setTransform(viewModelArray, (item) => {
+        assert.equal(JournalControl.isJournalingDisabled(), true)
+        return { id: item.id, name: item.name.toUpperCase() }
+    })
 
     const result = ModelViewModelExpander.expandNextData(
         nextData,
         viewModelArray,
-        modelArray,
-        (item) => {
-            assert.equal(JournalControl.isJournalingDisabled(), true)
-            return { id: item.id, name: item.name.toUpperCase() }
-        }
+        modelArray
     )
 
     assert.deepEqual(modelArray, nextData)
@@ -54,12 +58,12 @@ test('expandNextData appends model and transformed view model items', () => {
     const modelArray = [{ id: 1, name: 'alpha' }]
     const viewModelArray = [{ id: 1, name: 'ALPHA' }]
     const nextData = [{ id: 2, name: 'beta' }]
+    setTransform(viewModelArray, (item) => ({ id: item.id, name: item.name.toUpperCase() }))
 
     ModelViewModelExpander.expandNextData(
         nextData,
         viewModelArray,
         modelArray,
-        (item) => ({ id: item.id, name: item.name.toUpperCase() }),
         true
     )
 
@@ -80,19 +84,47 @@ test('expand resolves nested targets and replaces their data', () => {
     const rootModelArray = []
     const rootViewModelArray = { data: [] }
     const nextData = [{ id: 2, name: 'new' }]
+    setTransform(viewModelParent.children.data, (item) => ({ id: item.id, label: item.name.toUpperCase() }))
 
     const result = ModelViewModelExpander.expand(
         nextData,
         viewModelParent,
         modelParent,
         rootViewModelArray,
-        rootModelArray,
-        (item) => ({ id: item.id, label: item.name.toUpperCase() })
+        rootModelArray
     )
 
     assert.deepEqual(modelParent.children, nextData)
     assert.deepEqual(viewModelParent.children.data, [{ id: 2, label: 'NEW' }])
     assert.strictEqual(result, viewModelParent.children.data)
+})
+
+test('expand accepts append before target options', () => {
+    const modelParent = { descendants: [{ id: 1, name: 'old' }] }
+    const viewModelParent = { descendants: { data: [{ id: 1, label: 'OLD' }] } }
+    setTransform(viewModelParent.descendants.data, (item) => ({ id: item.id, label: item.name.toUpperCase() }))
+
+    ModelViewModelExpander.expand(
+        [{ id: 2, name: 'new' }],
+        viewModelParent,
+        modelParent,
+        { data: [] },
+        [],
+        true,
+        {
+            viewModelChildrenKey: 'descendants',
+            modelChildrenKey: 'descendants'
+        }
+    )
+
+    assert.deepEqual(modelParent.descendants, [
+        { id: 1, name: 'old' },
+        { id: 2, name: 'new' }
+    ])
+    assert.deepEqual(viewModelParent.descendants.data, [
+        { id: 1, label: 'OLD' },
+        { id: 2, label: 'NEW' }
+    ])
 })
 
 test('createExpandHandler loads children once and toggles expansion', () => {

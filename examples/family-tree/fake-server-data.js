@@ -148,3 +148,27 @@ export function getPersons(parentId = null, searchNamePattern = undefined, start
         hasMore: start + items.length < persons.length
     }
 }
+
+export function savePersons(persons, parentId = null) {
+    for (const person of persons) {
+        const values = {
+            id: person.id,
+            parentId,
+            name: person.name,
+            wage: person.wage,
+            birthyear: person.birthyear,
+            street: person.address?.street || '',
+            city: person.address?.city || '',
+            tags: structuredClone(person.tags || [])
+        }
+        const row = database.tables.persons.data.find((item) => item.id === person.id)
+
+        if (row) {
+            Object.assign(row, values)
+        } else {
+            database.tables.persons.data.push(values)
+        }
+
+        savePersons(person.children || [], person.id)
+    }
+}

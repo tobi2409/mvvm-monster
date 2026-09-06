@@ -30,10 +30,12 @@ const ModelViewModelExpander = (function () {
         nextData,
         viewModelArrayData,
         modelArray,
-        transformItem = (item) => item,
         append = false
     ) {
         //TODO: Error Handling
+        const transformItem = typeof viewModelArrayData.__transform__ === 'function'
+            ? viewModelArrayData.__transform__
+            : (item) => item
 
         return JournalControl.withoutJournaling(() => {
             if (append) {
@@ -60,9 +62,8 @@ const ModelViewModelExpander = (function () {
         modelItem,
         rootViewModelArray,
         rootModelArray,
-        transformItem = (item) => item,
-        options = undefined,
-        append = false
+        append = false,
+        options = undefined
     ) {
         const { viewModelArray, modelArray } = getExpandTargets(
             viewModelItem,
@@ -76,7 +77,6 @@ const ModelViewModelExpander = (function () {
             nextData,
             viewModelArray?.data,
             modelArray,
-            transformItem,
             append
         )
     }

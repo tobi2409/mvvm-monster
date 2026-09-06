@@ -1,6 +1,7 @@
-# TemplateEngine
+# mvvm-monster
 
-A lightweight, vanilla JavaScript template engine with declarative HTML tags and reactive DOM updates.
+A lightweight reactive MVVM framework for declarative HTML, synchronized
+model/view-model collections, and targeted DOM updates.
 
 ## Features
 
@@ -16,14 +17,14 @@ A lightweight, vanilla JavaScript template engine with declarative HTML tags and
 ## Installation
 
 ```js
-import TemplateEngine from '@tobi2409/template-engine'
-import ViewModelArray from '@tobi2409/template-engine/viewmodel-array'
-import ModelJournal from '@tobi2409/template-engine/model-journal'
+import TemplateEngine from '@tobi2409/mvvm-monster'
+import ViewModelArray from '@tobi2409/mvvm-monster/viewmodel-array'
+import ModelJournal from '@tobi2409/mvvm-monster/model-journal'
 ```
 
 ## Examples (start here)
 
-Browse the live demo files in the [GitHub repository](https://github.com/tobi2409/template-engine/tree/main/examples).
+Browse the live demo files in the [GitHub repository](https://github.com/tobi2409/mvvm-monster/tree/main/examples).
 
 Featured demos:
 
@@ -35,8 +36,8 @@ Interesting snippets from those demos:
 ### MVVM: computed fields + dependency chaining
 
 ```js
-import TemplateEngine from '@tobi2409/template-engine'
-import ViewModelArray from '@tobi2409/template-engine/viewmodel-array'
+import TemplateEngine from '@tobi2409/mvvm-monster'
+import ViewModelArray from '@tobi2409/mvvm-monster/viewmodel-array'
 
 const viewModel = TemplateEngine.reactive({
   get fullName() {
@@ -110,8 +111,8 @@ delete: (e, dataElement, _, contextStack) => {
 > The examples use local file paths and are intended to be run directly from the cloned repository. To try them out, clone the repo and open the HTML files in a browser:
 >
 > ```bash
-> git clone https://github.com/tobi2409/template-engine.git
-> cd template-engine
+> git clone https://github.com/tobi2409/mvvm-monster.git
+> cd mvvm-monster
 > ```
 
 ## Quick Start
@@ -290,7 +291,7 @@ maps model items to view-model items and keeps the mapped array associated with
 its source array. It returns a stable `{ data, state }` container.
 
 ```js
-import ViewModelArray from '@tobi2409/template-engine/viewmodel-array'
+import ViewModelArray from '@tobi2409/mvvm-monster/viewmodel-array'
 
 const viewModelPersons = ViewModelArray.get(
   model.persons,
@@ -382,7 +383,7 @@ property and array changes to `console.log`. Array paths use `id` by default;
 pass another identifier property when required.
 
 ```js
-import ModelJournal from '@tobi2409/template-engine/model-journal'
+import ModelJournal from '@tobi2409/mvvm-monster/model-journal'
 
 const model = ModelJournal.reactive({
   persons: [{ personId: 'p1', name: 'Alice' }]

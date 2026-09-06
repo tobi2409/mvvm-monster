@@ -1,0 +1,129 @@
+:root {
+    font-family: Georgia, "Times New Roman", serif;
+    color: #202925;
+    background: #e8ece7;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 3rem 1rem;
+    background:
+        linear-gradient(rgba(32, 41, 37, 0.05) 1px, transparent 1px),
+        #e8ece7;
+    background-size: 100% 2rem;
+}
+
+#app {
+    width: min(42rem, 100%);
+    margin: 0 auto;
+}
+
+header {
+    margin-bottom: 1.75rem;
+    border-bottom: 2px solid #202925;
+}
+
+.eyebrow {
+    margin: 0 0 0.35rem;
+    color: #a23b2a;
+    font-family: "Trebuchet MS", sans-serif;
+    font-size: 0.78rem;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+h1 {
+    margin: 0 0 1rem;
+    font-size: clamp(2rem, 8vw, 3.5rem);
+    font-weight: normal;
+    letter-spacing: 0;
+}
+
+.toolbar {
+    display: grid;
+    grid-template-columns: minmax(10rem, 1fr) auto auto;
+    gap: 0.5rem;
+}
+
+input,
+button {
+    min-height: 2.75rem;
+    border: 1px solid #202925;
+    border-radius: 4px;
+    font: 1rem "Trebuchet MS", sans-serif;
+}
+
+input {
+    min-width: 0;
+    padding: 0.65rem 0.8rem;
+    background: #f8faf7;
+}
+
+button {
+    padding: 0.65rem 1rem;
+    background: #202925;
+    color: #fff;
+    cursor: pointer;
+}
+
+button:hover {
+    background: #a23b2a;
+}
+
+button.secondary {
+    background: transparent;
+    color: #202925;
+}
+
+.status,
+.loading {
+    margin: 1rem 0 0.65rem;
+    font-family: "Trebuchet MS", sans-serif;
+    font-size: 0.9rem;
+}
+
+.item-list {
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid #829087;
+    list-style: none;
+}
+
+.item-list li {
+    display: grid;
+    grid-template-columns: 4rem 1fr;
+    gap: 1rem;
+    align-items: baseline;
+    padding: 0.9rem 0.25rem;
+    border-bottom: 1px solid #aeb8b1;
+}
+
+.item-id {
+    color: #a23b2a;
+    font: 0.82rem "Trebuchet MS", sans-serif;
+}
+
+.load-more {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+@media (max-width: 34rem) {
+    body {
+        padding-top: 1.5rem;
+    }
+
+    .toolbar {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .toolbar input {
+        grid-column: 1 / -1;
+    }
+}

@@ -3,9 +3,10 @@
 
 import TemplateEngine from '../../src/template-engine.js'
 import ViewModelArray from '../../src/viewmodel-array.js'
+import Paginator from '../../src/paginator.js'
 import ModelViewModelExpander from '../../src/model-viewmodel-expander.js'
 import ModelJournal from '../../src/model-journal.js'
-import { getPersons } from './fake-server-data.js'
+import { getPersons, savePersons } from './fake-server-data.js'
 
 // durch Journal kann man die Änderungen im Model nachvollziehen und speichern
 const model = ModelJournal.reactive({
@@ -28,9 +29,6 @@ const viewModel = TemplateEngine.reactive({
 
     set searchNamePattern(value) {
         this._searchNamePattern = value
-        const state = viewModel.persons.state
-        state.start = 0
-        state.searchNamePattern = value
         // sowohl Model als auch ViewModel werden aktualisiert
         // das Model soll sich auch ändern, weil die Daten vom Server kommen
         // würden wir nur die bereits gefetchten Daten filtern, sollte sich nur das ViewModel ändern
@@ -97,10 +95,14 @@ const viewModel = TemplateEngine.reactive({
     // TODO: markRecursive
     getViewModelArray(modelArray, modelItem = undefined) {
         const state = {
-            start: 0,
-            searchNamePattern: undefined,
-            hasMore: modelArray.length === 0,
+            ...Paginator.createState({ limit: 1 }),
             newPerson: { name: '' },
+            loadNextPage: (_, viewModelItem) => viewModel.loadServerData(
+                modelItem ? viewModelItem : undefined,
+                modelItem,
+                state.searchNamePattern,
+                true
+            ),
             addNewPerson: () => {
                 viewModelArray.data.push({
                         id: `new-${Math.random().toString(36).substring(2, 9)}`,
@@ -122,14 +124,6 @@ const viewModel = TemplateEngine.reactive({
                 viewModelArray.data.at(-1).childrenLoaded = true
 
                 state.newPerson.name = ''
-            },
-            loadNextData: (_, viewModelItem) => {
-                viewModel.loadServerData(
-                    modelItem ? viewModelItem : undefined,
-                    modelItem,
-                    state.searchNamePattern,
-                    true
-                )
             }
         }
 
@@ -149,36 +143,48 @@ const viewModel = TemplateEngine.reactive({
         return this.getViewModelArray(model.persons)
     },
 
-    loadServerData(viewModelParent = undefined, modelParent = undefined, searchNamePattern = undefined, append = false) {
-        TemplateEngine.withoutModelSynchronization(() => {
-            const viewModelArray = viewModelParent?.children ?? viewModel.persons
-            const state = viewModelArray.state
+    async loadServerData(
+        viewModelParent = undefined,
+        modelParent = undefined,
+        searchNamePattern = undefined,
+        append = false
+    ) {
+        const viewModelArray = viewModelParent?.children ?? viewModel.persons
+        const state = viewModelArray.state
 
-            if (!append) {
-                state.start = 0
-                state.searchNamePattern = searchNamePattern
-            }
+        if (!append) {
+            state.searchNamePattern = searchNamePattern
+        }
 
-            const { items, hasMore } = getPersons(
-                viewModelParent?.id,
-                state.searchNamePattern,
-                state.start
-            )
+        const loadPage = append ? Paginator.loadNextPage : Paginator.loadFirstPage
 
-            ModelViewModelExpander.expand(
-                items,
-                viewModelParent,
-                modelParent,
-                viewModel.persons,
-                model.persons,
-                (personModelItem) => this.transform(personModelItem),
-                undefined,
-                append
-            )
+        return loadPage(state, async (start, limit) => {
+            const result = getPersons(modelParent?.id, state.searchNamePattern, start, limit)
 
-            state.start += items.length
-            viewModelArray.state.hasMore = hasMore
+            await TemplateEngine.withoutModelSynchronization(() => {
+                ModelViewModelExpander.expand(
+                    result.items,
+                    viewModelParent,
+                    modelParent,
+                    viewModel.persons,
+                    model.persons,
+                    append
+                )
+            })
+
+            return result
         })
+    },
+
+    saveChanges() {
+        const journal = ModelJournal.getJournal(model)
+
+        if (journal.size === 0) {
+            return
+        }
+
+        savePersons(model.persons)
+        journal.clear()
     },
 
     logModels() {

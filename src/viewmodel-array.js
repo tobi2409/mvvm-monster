@@ -47,10 +47,12 @@ const ViewModelArray = (function () {
                 return result
             })
             
-            data.__modelArray__ = modelArray
-            data.__transform__ = transform
-            data.__reverseTransform__ = reverseTransform
-            data.__propertyMapping__ = propertyMapping
+            Object.defineProperties(data, {
+                __modelArray__: { value: modelArray },
+                __transform__: { value: transform },
+                __reverseTransform__: { value: reverseTransform },
+                __propertyMapping__: { value: propertyMapping }
+            })
 
             /*if (recursive) {
                 data.__recursive__ = true
