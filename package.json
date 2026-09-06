@@ -1,6 +1,6 @@
 {
     "name": "@tobi2409/mvvm-monster",
-    "version": "0.9.11",
+    "version": "0.9.12",
     "description": "Lightweight reactive MVVM framework for declarative HTML and synchronized model/view-model collections",
     "license": "MIT",
     "type": "module",
