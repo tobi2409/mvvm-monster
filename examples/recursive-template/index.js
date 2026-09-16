@@ -1,5 +1,5 @@
 import TemplateEngine from '../../src/template-engine.js'
-import { removeByReference, getParentContext } from '../../src/array-helpers.js'
+import ArrayHelpers from '../../src/collections/array-helpers.js'
 import { runDemoUpdates } from './demo-updates.js'
 
 const data = TemplateEngine.reactive({
@@ -41,8 +41,8 @@ const data = TemplateEngine.reactive({
     },
     
     delete: (e, dataElement, _, contextStack) => {
-        const parentChildren = getParentContext(contextStack)?.data?.children ?? data.folders
-        removeByReference(parentChildren, dataElement)
+        const parentChildren = ArrayHelpers.getParentContext(contextStack)?.data?.children ?? data.folders
+        ArrayHelpers.removeByReference(parentChildren, dataElement)
     },
 
     runDemoUpdates: () => {

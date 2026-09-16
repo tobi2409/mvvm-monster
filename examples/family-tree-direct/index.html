@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+
+        <link rel="stylesheet" href="./index.css" />
+    </head>
+    <body>
+        <div id="app"></div>
+        
+        <template id="ul-structured-data">
+            <p><get>*list.data.length</get> Entries</p>
+
+            <ul>
+                <each of="*list.data" as="p">
+                    <li>
+                        <button action-click="p.expand">Expand</button>
+                        <input type="text" bind-input-value="p.name" />
+                        <input type="text" bind-input-value="p.wage" />
+                        <input type="number" bind-input-value="p.birthyear" />
+                        <input type="text" bind-input-value="p.address.street" />
+                        <input type="text" bind-input-value="p.address.city" />
+
+                        <if test="p.expanded" justHideChildren="true">
+                            <template-use
+                                template-id="ul-structured-data"
+                                data-list="p.children"></template-use>
+                        </if>
+                    </li>
+                </each>
+
+                <if test="*list.state.hasMore">
+                    <button action-click="*list.state.loadNextPage">Load Next Data</button>
+                </if>
+
+                <li>
+                    <input type="text" bind-input-value="*list.state.newPerson.name" placeholder="Neuer Name ..." />
+                    <button action-click="*list.state.addNewPerson">+ Add</button>
+                </li>
+            </ul>
+        </template>
+
+        <template id="app-template">
+            <h1>👋 Hello, <get>user</get></h1>
+
+            <input type="text" bind-input-value="searchNamePattern" placeholder="Search Name ..." />
+
+            <template-use
+                template-id="ul-structured-data"
+                data-list="persons"></template-use>
+
+            <br />
+            <button action-click="saveChanges">Save Changes to Server</button>
+            <button action-click="logModels">Log Models</button>
+        </template>
+
+        <template-use
+            id="app-template-use"
+            template-id="app-template"
+            mount-id="app"
+        >
+        </template-use>
+
+        <script src="https://cdn.jsdelivr.net/npm/alasql@4/dist/alasql.min.js"></script>
+        <script type="module" src="index.js"></script>
+    </body>
+</html>

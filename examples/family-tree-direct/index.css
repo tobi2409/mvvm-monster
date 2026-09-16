@@ -1,0 +1,166 @@
+:root {
+    color-scheme: light;
+    font-family: "Trebuchet MS", "Segoe UI", sans-serif;
+    color: #24313a;
+    background: #f4f1ea;
+}
+
+body {
+    max-width: 72rem;
+    margin: 0 auto;
+    padding: 2rem clamp(1rem, 4vw, 4rem) 4rem;
+    background: linear-gradient(135deg, #f4f1ea 0%, #eef4f1 100%);
+}
+
+#app {
+    min-width: 0;
+}
+
+#app > h1 {
+    margin: 0 0 1.5rem;
+    color: #174c4d;
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    letter-spacing: 0;
+}
+
+#app > ul,
+#app ul ul {
+    position: relative;
+    margin: 0;
+    padding-left: 2rem;
+    list-style: none;
+}
+
+#app > ul {
+    padding-left: 0;
+}
+
+#app ul ul {
+    margin-top: 0.75rem;
+}
+
+#app li {
+    position: relative;
+    margin: 0.7rem 0;
+    padding-left: 1.25rem;
+}
+
+#app > ul > li {
+    padding-left: 0;
+}
+
+#app li::before,
+#app li::after {
+    position: absolute;
+    content: "";
+    background: #9bb8ad;
+}
+
+#app li::before {
+    top: 1.8rem;
+    left: 0;
+    width: 1.25rem;
+    height: 2px;
+}
+
+#app li::after {
+    top: -0.7rem;
+    bottom: -0.7rem;
+    left: 0;
+    width: 2px;
+}
+
+#app > ul > li::before,
+#app > ul > li::after {
+    display: none;
+}
+
+#app li:last-child::after {
+    bottom: 1.8rem;
+}
+
+#app li > input:not(.tag-input) {
+    box-sizing: border-box;
+    width: min(100%, 12rem);
+    margin: 0.2rem 0.35rem 0.2rem 0;
+    padding: 0.65rem 0.75rem;
+    border: 1px solid #c5d3cc;
+    border-radius: 0.45rem;
+    background: #fffdf9;
+    color: #24313a;
+    font: inherit;
+    box-shadow: 0 2px 0 rgba(36, 49, 58, 0.04);
+}
+
+#app li input.tag-input {
+    box-sizing: border-box;
+    width: min(100%, 12rem);
+    margin: 0.2rem 0.35rem 0.2rem 0;
+    padding: 0.25rem 0.4rem;
+    border: 1px solid #c5d3cc;
+    border-radius: 0.45rem;
+    background: #fffdf9;
+    color: #24313a;
+    font: inherit;
+    box-shadow: 0 2px 0 rgba(36, 49, 58, 0.04);
+}
+
+#app li > button:not(.tag-button) {
+    margin: 0.2rem 0.5rem 0.2rem 0;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid #398477;
+    border-radius: 0.4rem;
+    background: #e1efea;
+    color: #174c4d;
+    cursor: pointer;
+    font: inherit;
+}
+
+#app li button.tag-button {
+    margin: 0.2rem 0.5rem 0.2rem 0;
+    padding: 0.25rem 0.4rem;
+    border: 1px solid #398477;
+    border-radius: 0.4rem;
+    background: #cccfce;
+    color: #174c4d;
+    cursor: pointer;
+    font: inherit;
+}
+
+#app li > button:hover {
+    background: #c8e2d9;
+}
+
+#app li > input:focus {
+    outline: 3px solid rgba(57, 132, 119, 0.25);
+    border-color: #398477;
+}
+
+#app > br {
+    display: none;
+}
+
+#app > button {
+    margin: 1.5rem 0.5rem 0 0;
+    padding: 0.7rem 1rem;
+    border: 0;
+    border-radius: 0.4rem;
+    background: #174c4d;
+    color: white;
+    cursor: pointer;
+    font: inherit;
+}
+
+#app > button:hover {
+    background: #276b68;
+}
+
+@media (max-width: 42rem) {
+    body {
+        padding: 1.25rem 0.75rem 2rem;
+    }
+
+    #app li > input {
+        width: calc(50% - 0.5rem);
+    }
+}

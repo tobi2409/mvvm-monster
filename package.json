@@ -7,11 +7,13 @@
     "main": "./src/template-engine.js",
     "exports": {
         ".": "./src/template-engine.js",
-        "./viewmodel-array": "./src/viewmodel-array.js",
-        "./model-journal": "./src/model-journal.js",
-        "./model-viewmodel-expander": "./src/model-viewmodel-expander.js",
-        "./paginator": "./src/paginator.js",
-        "./array-helpers": "./src/array-helpers.js"
+        "./viewmodel-array": "./src/model/viewmodel-array.js",
+        "./model-journal": "./src/reactivity/model-journal.js",
+        "./data-loader": "./src/dataloaders/data-loader.js",
+        "./mvvm-data-loader": "./src/dataloaders/mvvm-data-loader.js",
+        "./expand-handler": "./src/collections/expand-handler.js",
+        "./paginator": "./src/collections/paginator.js",
+        "./array-helpers": "./src/collections/array-helpers.js"
     },
     "files": [
         "src",

@@ -2,10 +2,11 @@
 // ViewModel: für View aufbereitete Daten
 
 import TemplateEngine from '../../src/template-engine.js'
-import ViewModelArray from '../../src/viewmodel-array.js'
-import Paginator from '../../src/paginator.js'
-import ModelViewModelExpander from '../../src/model-viewmodel-expander.js'
-import ModelJournal from '../../src/model-journal.js'
+import ViewModelArray from '../../src/model/viewmodel-array.js'
+import Paginator from '../../src/collections/paginator.js'
+import MVVMDataLoader from '../../src/dataloaders/mvvm-data-loader.js'
+import ExpandHandler from '../../src/collections/expand-handler.js'
+import ModelJournal from '../../src/reactivity/model-journal.js'
 import { getPersons, savePersons } from './fake-server-data.js'
 
 // durch Journal kann man die Änderungen im Model nachvollziehen und speichern
@@ -63,7 +64,7 @@ const viewModel = TemplateEngine.reactive({
             // nächsten Expand durch einen erneuten Serverabruf überschrieben werden.
             expanded: childrenLoaded,
             childrenLoaded,
-            expand: ModelViewModelExpander.createExpandHandler((viewModelParent) => viewModel.loadServerData(viewModelParent, personModelItem)),
+            expand: ExpandHandler.create((viewModelParent) => viewModel.loadServerData(viewModelParent, personModelItem)),
             tagsVisible: false,
             showTags: (_, viewModelParent) => viewModelParent.tagsVisible = !viewModelParent.tagsVisible,
             addTag: (_, viewModelParent) => 
@@ -162,7 +163,7 @@ const viewModel = TemplateEngine.reactive({
             const result = getPersons(modelParent?.id, state.searchNamePattern, start, limit)
 
             await TemplateEngine.withoutModelSynchronization(() => {
-                ModelViewModelExpander.expand(
+                MVVMDataLoader.load(
                     result.items,
                     viewModelParent,
                     modelParent,

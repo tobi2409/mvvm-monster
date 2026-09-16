@@ -1,5 +1,5 @@
 import TemplateEngine from '../../src/template-engine.js'
-import Paginator from '../../src/paginator.js'
+import Paginator from '../../src/collections/paginator.js'
 
 const serverItems = Array.from({ length: 23 }, (_, index) => ({
     id: index + 1,

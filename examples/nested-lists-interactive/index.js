@@ -1,5 +1,5 @@
 import TemplateEngine from '../../src/template-engine.js'
-import { removeByReference } from '../../src/array-helpers.js'
+import ArrayHelpers from '../../src/collections/array-helpers.js'
 import { runDemoUpdates } from './demo-updates.js'
 
 const data = TemplateEngine.reactive({
@@ -39,7 +39,7 @@ const data = TemplateEngine.reactive({
     },
     
     delete: (e, dataElement) => {
-        removeByReference(data.persons, dataElement)
+        ArrayHelpers.removeByReference(data.persons, dataElement)
     },
 
     toggleChildEdit: (e, dataElement) => {
@@ -50,7 +50,7 @@ const data = TemplateEngine.reactive({
         const parentData = contextStack.get('p')?.data
         
         if (parentData?.children) {
-            removeByReference(parentData.children, dataElement)
+            ArrayHelpers.removeByReference(parentData.children, dataElement)
         }
     },
 

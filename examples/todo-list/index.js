@@ -1,5 +1,5 @@
 import TemplateEngine from '../../src/template-engine.js'
-import { removeByReference } from '../../src/array-helpers.js'
+import ArrayHelpers from '../../src/collections/array-helpers.js'
 import { runDemoUpdates } from './demo-updates.js'
 
 const data = TemplateEngine.reactive({
@@ -22,7 +22,7 @@ const data = TemplateEngine.reactive({
     },
 
     deleteTodo: function(e, dataElement) {
-        removeByReference(data.todos, dataElement)
+        ArrayHelpers.removeByReference(data.todos, dataElement)
     },
 
     runDemoUpdates: function() {

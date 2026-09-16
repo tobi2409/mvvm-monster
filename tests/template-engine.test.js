@@ -2,8 +2,8 @@ import { test, describe, beforeEach } from 'node:test'
 import assert from 'node:assert/strict'
 import { JSDOM } from 'jsdom'
 import TemplateEngine from '../src/template-engine.js'
-import ModelSynchronization from '../src/components/reactivity-helpers/model-synchronization.js'
-import NodeHolders from '../src/components/utils/node-holders.js'
+import ModelSynchronization from '../src/model/model-synchronization.js'
+import NodeHolders from '../src/dom/node-holders.js'
 
 const { nodeHoldersByKeys } = NodeHolders
 

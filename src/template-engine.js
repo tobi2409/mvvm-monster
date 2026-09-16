@@ -1,11 +1,11 @@
 // Reactive Component: Reactivity through Object.defineProperty-based data observation
 
-import RenderEngine from './components/render-engine.js'
-import Notifier from './components/notifier.js'
-import ReactivityFrame from './components/reactivity-helpers/reactivity-frame.js'
-import UuidItemMap from './components/foundation/uuid-item-map.js'
-import ModelSynchronization from './components/reactivity-helpers/model-synchronization.js'
-import ViewModelItemPreparation from './components/viewmodel-helpers/viewmodel-item-preparation.js'
+import RenderEngine from './rendering/render-engine.js'
+import Notifier from './rendering/notifier.js'
+import ReactivityFrame from './reactivity/reactivity-frame.js'
+import UuidItemMap from './identity/uuid-item-map.js'
+import ModelSynchronization from './model/model-synchronization.js'
+import ViewModelItemPreparation from './model/viewmodel-item-preparation.js'
 
 const TemplateEngine = (function () {
     return {

@@ -20,6 +20,7 @@ model/view-model collections, and targeted DOM updates.
 import TemplateEngine from '@tobi2409/mvvm-monster'
 import ViewModelArray from '@tobi2409/mvvm-monster/viewmodel-array'
 import ModelJournal from '@tobi2409/mvvm-monster/model-journal'
+import DataLoader from '@tobi2409/mvvm-monster/data-loader'
 ```
 
 ## Examples (start here)
@@ -376,6 +377,47 @@ items. Use this only for items that still need the mapped array's reverse and
 forward transforms; ordinary complete view-model items can be inserted without
 the flag.
 
+## DataLoader
+
+`DataLoader.load` applies fetched data to one directly rendered model array.
+
+```js
+import DataLoader from '@tobi2409/mvvm-monster/data-loader'
+
+DataLoader.load(
+  result.items,
+  parent,
+  rootData,
+  append
+)
+```
+
+Use `ExpandHandler.create(loadData)` for lazy child loading and expanded-state
+toggling.
+
+```js
+import ExpandHandler from '@tobi2409/mvvm-monster/expand-handler'
+
+const expand = ExpandHandler.create((parent) => loadChildren(parent))
+```
+
+`MVVMDataLoader` provides the corresponding API when model and view model are
+separate. It updates the model array and transforms the loaded items into the
+view-model array.
+
+```js
+import MVVMDataLoader from '@tobi2409/mvvm-monster/mvvm-data-loader'
+
+MVVMDataLoader.load(
+  result.items,
+  viewModelParent,
+  modelParent,
+  rootViewModelArray,
+  rootModelArray,
+  append
+)
+```
+
 ## ModelJournal
 
 `ModelJournal.reactive(data, identifierProperty?)` instruments a model and logs
@@ -407,10 +449,16 @@ await ModelJournal.withoutJournaling(async () => {
 
 Internal dependencies follow one direction:
 
-- `components/foundation`: import-free identity and value-processing primitives.
-- `components/utils`: general helpers that may depend on `foundation` only.
-- `components/reactivity-helpers` and `components/viewmodel-helpers`: domain logic built on lower layers.
-- rendering components and public APIs: orchestration over those helpers.
+- `identity`, `transforms`, and `dom`: focused import-free primitives.
+- `resolution`: key and alias resolution built on stable item identity.
+- `reactivity` and `model`: observation and model/view-model synchronization.
+- `rendering`: initial rendering followed by refresh, delegation, and notification.
+- `dataloaders` and `collections`: public data-loading and collection utilities.
+- `template-engine.js`: the top-level composition root.
+
+Production imports point only to explicitly lower abstractions. Tests mirror the
+source areas and may import their subject plus lower-level collaborators, never
+a peer or a higher-level module.
 
 Refresh orchestration belongs to `Notifier`; the pure `DependencyResolver` only
 calculates matching dependency keys. Lower layers therefore never import the
@@ -418,19 +466,19 @@ rendering layer.
 
 ## Technical background: NodeHolders and UUID identity
 
-- **NodeHolders:** The engine tracks which DOM nodes depend on a particular "full key" using a segmented Map managed by the node-holders utility ([src/components/utils/node-holders.js](src/components/utils/node-holders.js)). Full keys (for example `users.3.name` or `item#.children.2.title`) are split into segments and stored in nested Maps; the leaf entries contain arrays of node-holders that reference that full key. When a property changes the engine builds the full key and looks up any matching holders to refresh — this enables targeted updates without scanning the entire DOM.
+- **NodeHolders:** The engine tracks which DOM nodes depend on a particular "full key" using a segmented Map managed by the node-holders utility ([src/dom/node-holders.js](src/dom/node-holders.js)). Full keys (for example `users.3.name` or `item#.children.2.title`) are split into segments and stored in nested Maps; the leaf entries contain arrays of node-holders that reference that full key. When a property changes the engine builds the full key and looks up any matching holders to refresh — this enables targeted updates without scanning the entire DOM.
 
-- **UUID / item identity:** For arrays the engine keeps stable per-item identities using a WeakMap-backed id cache (see [src/components/foundation/uuid-item-map.js](src/components/foundation/uuid-item-map.js)). When rendering `<each>` the engine assigns each object a stable id so that moving, inserting, or deleting items preserves existing DOM nodes for unchanged items. That reduces DOM churn and keeps per-item state (inputs, event handlers) stable across array mutations.
+- **UUID / item identity:** For arrays the engine keeps stable per-item identities using a WeakMap-backed id cache (see [src/identity/uuid-item-map.js](src/identity/uuid-item-map.js)). When rendering `<each>` the engine assigns each object a stable id so that moving, inserting, or deleting items preserves existing DOM nodes for unchanged items. That reduces DOM churn and keeps per-item state (inputs, event handlers) stable across array mutations.
 
 - **Benefits:** targeted refreshes for changed keys, minimal DOM re-creation, efficient nested/context lookups, and stable per-item state during array operations.
 
 - **Caveats:** identity tracking requires array items to be objects (not primitives). Also, replacing a nested object does not automatically notify child keys — use explicit child-key assignments when needed (see "Known limitation: object replacement notifications").
 
 References:
-- Node holder implementation: [src/components/utils/node-holders.js](src/components/utils/node-holders.js)
-- Mapped array helper: [src/viewmodel-array.js](src/viewmodel-array.js)
-- Item identity helper: [src/components/foundation/uuid-item-map.js](src/components/foundation/uuid-item-map.js)
-- Initial rendering and refresh dispatch: [src/components/render-engine.js](src/components/render-engine.js) and [src/components/refresh-delegator.js](src/components/refresh-delegator.js)
+- Node holder implementation: [src/dom/node-holders.js](src/dom/node-holders.js)
+- Mapped array helper: [src/model/viewmodel-array.js](src/model/viewmodel-array.js)
+- Item identity helper: [src/identity/uuid-item-map.js](src/identity/uuid-item-map.js)
+- Initial rendering and refresh dispatch: [src/rendering/render-engine.js](src/rendering/render-engine.js) and [src/rendering/refresh-delegator.js](src/rendering/refresh-delegator.js)
 
 ## Development
 
