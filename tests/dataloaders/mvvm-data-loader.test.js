@@ -16,7 +16,7 @@ test('getLoadTargets returns root arrays when no parent item exists', () => {
     const result = MVVMDataLoader.getLoadTargets(undefined, undefined, rootViewModelArray, rootModelArray)
 
     assert.equal(result.viewModelArray, rootViewModelArray)
-    assert.equal(result.modelItem, undefined)
+    assert.equal(result.modelParent, undefined)
     assert.equal(result.modelArray, rootModelArray)
 })
 
@@ -27,7 +27,7 @@ test('getLoadTargets resolves nested child arrays using the model parent', () =>
 
     const result = MVVMDataLoader.getLoadTargets(parent, parent, rootViewModelArray, rootModelArray)
 
-    assert.deepEqual(result.modelItem, parent)
+    assert.deepEqual(result.modelParent, parent)
     assert.deepEqual(result.modelArray, parent.children)
     assert.deepEqual(result.viewModelArray, parent.children)
 })

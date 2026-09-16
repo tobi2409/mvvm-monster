@@ -1,19 +1,20 @@
 import JournalControl from '../reactivity/journal-control.js'
 
 const DataLoader = (function () {
-    function getLoadTarget(dataItem, rootDataArray, options = {}) {
+    function getLoadTarget(dataParent, rootDataArray, options = {}) {
         const { childrenKey = 'children' } = options
-        return dataItem ? dataItem[childrenKey] : rootDataArray
+        return dataParent ? dataParent[childrenKey] : rootDataArray
     }
 
-    function loadNextData(nextData, dataArray, append = false) {
+    function loadNextData(nextData, dataArray, append = false, prepareItem = (item) => item) {
         const dataArrayItems = dataArray?.data ?? dataArray
+        const preparedData = nextData.map(prepareItem)
 
         return JournalControl.withoutJournaling(() => {
             if (append) {
-                dataArrayItems.push(...nextData)
+                dataArrayItems.push(...preparedData)
             } else {
-                dataArrayItems.splice(0, dataArrayItems.length, ...nextData)
+                dataArrayItems.splice(0, dataArrayItems.length, ...preparedData)
             }
 
             return dataArrayItems
@@ -22,13 +23,14 @@ const DataLoader = (function () {
 
     function load(
         nextData,
-        dataItem,
+        dataParent,
         rootDataArray,
         append = false,
         options = {}
     ) {
-        const dataArray = getLoadTarget(dataItem, rootDataArray, options)
-        return loadNextData(nextData, dataArray, append)
+        const { prepareItem } = options
+        const dataArray = getLoadTarget(dataParent, rootDataArray, options)
+        return loadNextData(nextData, dataArray, append, prepareItem)
     }
 
     return {

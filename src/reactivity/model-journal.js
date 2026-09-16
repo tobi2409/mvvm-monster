@@ -26,7 +26,7 @@ const ModelJournal = (function () {
             journalByData.set(data, journal)
 
             function journalizeChange(fullKey, change) {
-                const changeSnapshot = structuredClone(change)
+                const changeSnapshot = cloneChange(change)
 
                 const journalEntry = journal.get(fullKey)
 
@@ -37,6 +37,19 @@ const ModelJournal = (function () {
 
                 const newJournalEntry = { fullKey, change: changeSnapshot }
                 journal.set(fullKey, newJournalEntry)
+            }
+
+            function cloneChange(value) {
+                if (typeof value === 'function' || value === null || typeof value !== 'object') {
+                    return value
+                }
+
+                if (Array.isArray(value)) {
+                    return value.map(cloneChange)
+                }
+
+                return Object.fromEntries(Object.entries(value).map(([key, nestedValue]) =>
+                    [key, cloneChange(nestedValue)]))
             }
 
             ReactivityFrame.makeReactive(data, '', {

@@ -3,8 +3,8 @@ import ModelSynchronization from '../model/model-synchronization.js'
 
 const MVVMDataLoader = (function () {
     function getLoadTargets(
-        viewModelItem,
-        modelItem,
+        viewModelParent,
+        modelParent,
         rootViewModelArray,
         rootModelArray,
         options = {}
@@ -15,12 +15,12 @@ const MVVMDataLoader = (function () {
         } = options
 
         return {
-            viewModelArray: viewModelItem
-                ? viewModelItem[viewModelChildrenKey]
+            viewModelArray: viewModelParent
+                ? viewModelParent[viewModelChildrenKey]
                 : rootViewModelArray,
-            modelItem,
-            modelArray: modelItem
-                ? modelItem[modelChildrenKey]
+            modelParent,
+            modelArray: modelParent
+                ? modelParent[modelChildrenKey]
                 : rootModelArray
         }
     }
@@ -50,16 +50,16 @@ const MVVMDataLoader = (function () {
 
     function load(
         nextData,
-        viewModelItem,
-        modelItem,
+        viewModelParent,
+        modelParent,
         rootViewModelArray,
         rootModelArray,
         append = false,
         options = {}
     ) {
         const { viewModelArray, modelArray } = getLoadTargets(
-            viewModelItem,
-            modelItem,
+            viewModelParent,
+            modelParent,
             rootViewModelArray,
             rootModelArray,
             options

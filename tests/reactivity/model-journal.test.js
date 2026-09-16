@@ -78,4 +78,16 @@ describe('ModelJournal.reactive', () => {
             change: { operation: 'set', value: 'Bobby' }
         })
     })
+
+    test('snapshots inserted items with enumerable action functions', () => {
+        const data = ModelJournal.reactive({ persons: [] })
+        const expand = () => {}
+
+        data.persons.push({ id: 'a', children: [], expand })
+
+        const change = ModelJournal.getJournal(data).get('persons').change
+        assert.notStrictEqual(change.items[0], data.persons[0])
+        assert.deepEqual(change.items[0], { id: 'a', children: [], expand })
+        assert.strictEqual(change.items[0].expand, expand)
+    })
 })

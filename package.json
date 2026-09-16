@@ -1,6 +1,6 @@
 {
     "name": "@tobi2409/mvvm-monster",
-    "version": "0.9.13",
+    "version": "0.9.14",
     "description": "Lightweight reactive MVVM framework for declarative HTML and synchronized model/view-model collections",
     "license": "MIT",
     "type": "module",
@@ -11,6 +11,9 @@
         "./model-journal": "./src/reactivity/model-journal.js",
         "./data-loader": "./src/dataloaders/data-loader.js",
         "./mvvm-data-loader": "./src/dataloaders/mvvm-data-loader.js",
+        "./datasource": "./src/datasources/datasource.js",
+        "./direct-adapter": "./src/datasources/direct-adapter.js",
+        "./mvvm-adapter": "./src/datasources/mvvm-adapter.js",
         "./expand-handler": "./src/collections/expand-handler.js",
         "./paginator": "./src/collections/paginator.js",
         "./array-helpers": "./src/collections/array-helpers.js"

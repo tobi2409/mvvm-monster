@@ -36,8 +36,8 @@
                 </if>
 
                 <li>
-                    <input type="text" bind-input-value="*list.state.newPerson.name" placeholder="Neuer Name ..." />
-                    <button action-click="*list.state.addNewPerson">+ Add</button>
+                    <input type="text" bind-input-value="*list.state.newItem.name" placeholder="Neuer Name ..." />
+                    <button action-click="*list.state.addNewItem">+ Add</button>
                 </li>
             </ul>
         </template>
@@ -45,7 +45,11 @@
         <template id="app-template">
             <h1>👋 Hello, <get>user</get></h1>
 
-            <input type="text" bind-input-value="searchNamePattern" placeholder="Search Name ..." />
+            <input
+                type="text"
+                bind-input-value="persons.state.searchNamePattern"
+                action-input="persons.state.reloadData"
+                placeholder="Search Name ..." />
 
             <template-use
                 template-id="ul-structured-data"
