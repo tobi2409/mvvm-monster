@@ -16,7 +16,7 @@ test('loads data into one direct-model array', () => {
         }
     })
 
-    const result = DataLoader.loadNextData(
+    const result = DataLoader.loadData(
         [{ id: 2, name: 'new' }],
         data,
         false
@@ -30,12 +30,15 @@ test('loads data into one direct-model array', () => {
 test('resolves and appends nested direct-mode data', () => {
     const parent = { children: { data: [{ id: 1 }] } }
 
-    DataLoader.load(
+    DataLoader.loadData(
         [{ id: 2 }],
-        parent,
-        { data: [] },
+        parent.children.data,
         true
     )
 
     assert.deepEqual(parent.children.data, [{ id: 1 }, { id: 2 }])
+})
+
+test('only exposes loadData', () => {
+    assert.deepEqual(Object.keys(DataLoader), ['loadData'])
 })
