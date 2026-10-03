@@ -11,9 +11,8 @@
         "./model-journal": "./src/reactivity/model-journal.js",
         "./data-loader": "./src/dataloaders/data-loader.js",
         "./mvvm-data-loader": "./src/dataloaders/mvvm-data-loader.js",
-        "./datasource": "./src/datasources/datasource.js",
-        "./direct-adapter": "./src/datasources/direct-adapter.js",
-        "./mvvm-adapter": "./src/datasources/mvvm-adapter.js",
+        "./direct-data-source": "./src/datasources/direct-data-source.js",
+        "./mvvm-data-source": "./src/datasources/mvvm-data-source.js",
         "./expand-handler": "./src/collections/expand-handler.js",
         "./paginator": "./src/collections/paginator.js",
         "./array-helpers": "./src/collections/array-helpers.js"

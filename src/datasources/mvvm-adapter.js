@@ -49,24 +49,9 @@ const MvvmAdapter = (function () {
                     modelParent
                 }),
                 // Serverdaten aktualisieren Model und ViewModel gemeinsam.
-                applyLoadedItems: ({ items, viewModelParent, modelParent, nextDataBucket }) =>
-                    MVVMDataLoader.load(
-                        items,
-                        viewModelParent,
-                        modelParent,
-                        viewModel[rootViewModelArrayProperty],
-                        dataSource.data,
-                        nextDataBucket,
-                        {
-                            viewModelChildrenKey: viewModelChildrenProperty,
-                            modelChildrenKey: modelChildrenProperty
-                        }
-                    ),
-                insertNewItem: (newItem, viewModelParent) => insertNewItem(
-                    newItem,
-                    modelParent ? viewModelParent : undefined,
-                    modelParent
-                ),
+                applyLoadedItems: ({ items, nextDataBucket }) =>
+                    MVVMDataLoader.loadData(items, viewModelArray.data, nextDataBucket),
+                insertNewItem: (newItem) => insertNewItem(newItem, viewModelArray),
                 finalizeInsertedItem: (item) => {
                     if (expander) {
                         // Neu angelegte Items duerfen beim ersten Expand nicht durch
@@ -88,18 +73,8 @@ const MvvmAdapter = (function () {
             return viewModelArray
         }
 
-        function insertNewItem(newItem, viewModelParent, modelParent) {
-            const { viewModelArray, modelArray } = MVVMDataLoader.getLoadTargets(
-                viewModelParent,
-                modelParent,
-                viewModel[rootViewModelArrayProperty],
-                dataSource.data,
-                {
-                    viewModelChildrenKey: viewModelChildrenProperty,
-                    modelChildrenKey: modelChildrenProperty
-                }
-            )
-            
+        function insertNewItem(newItem, viewModelArray) {
+            const modelArray = viewModelArray.data.__modelArray__
             const preparedItem = ViewModelArray.prepareItem(viewModelArray.data, newItem)
 
             ModelSynchronization.withoutModelSynchronization(() => {

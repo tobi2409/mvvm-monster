@@ -30,6 +30,8 @@ const layers = new Map([
     ['datasources/datasource.js', 2],
     ['datasources/direct-adapter.js', 3],
     ['datasources/mvvm-adapter.js', 4],
+    ['datasources/direct-data-source.js', 4],
+    ['datasources/mvvm-data-source.js', 5],
     ['rendering/default-node-attributes.js', 2],
     ['rendering/render-engine.js', 3],
     ['rendering/refresh-engine.js', 4],

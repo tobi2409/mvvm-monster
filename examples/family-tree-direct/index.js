@@ -1,9 +1,8 @@
 import TemplateEngine from '../../src/template-engine.js'
-import DataSource from '../../src/datasources/datasource.js'
-import DirectAdapter from '../../src/datasources/direct-adapter.js'
+import DirectDataSource from '../../src/datasources/direct-data-source.js'
 import { getPersons, savePersons } from './fake-server-data.js'
 
-const dataSource = DataSource.create(
+const data = DirectDataSource.create(
     [],
     () => ({
         id: `new-${Math.random().toString(36).substring(2, 9)}`,
@@ -24,14 +23,11 @@ const dataSource = DataSource.create(
     {
         limit: 1,
         journalize: true,
-        state: { searchNamePattern: undefined }
+        state: { searchNamePattern: undefined },
+        rootDataProperty: 'persons',
+        expander: true
     }
 )
-
-const data = DirectAdapter.create(dataSource, {
-    rootDataProperty: 'persons',
-    expander: true
-})
 
 data.user = 'Joe Doe'
 data.saveChanges = data.persons.state.saveChanges

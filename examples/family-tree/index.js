@@ -1,11 +1,15 @@
 import TemplateEngine from '../../src/template-engine.js'
 import ViewModelArray from '../../src/model/viewmodel-array.js'
-import DataSource from '../../src/datasources/datasource.js'
-import MvvmAdapter from '../../src/datasources/mvvm-adapter.js'
+import MvvmDataSource from '../../src/datasources/mvvm-data-source.js'
 import { getPersons, savePersons } from './fake-server-data.js'
 
-const dataSource = DataSource.create(
-    [],
+const model = {
+    user: 'Joe Doe',
+    persons: []
+}
+
+const persons = MvvmDataSource.create(
+    model.persons,
     () => ({
         id: `new-${Math.random().toString(36).substring(2, 9)}`,
         name: '',
@@ -22,15 +26,6 @@ const dataSource = DataSource.create(
         limit
     ),
     (model) => savePersons(model),
-    {
-        limit: 1,
-        journalize: true,
-        state: { searchNamePattern: undefined }
-    }
-)
-
-const viewModel = MvvmAdapter.create(
-    dataSource,
     (person) => ({
         id: person.id,
         name: person.name,
@@ -60,22 +55,31 @@ const viewModel = MvvmAdapter.create(
         })
     }),
     {
+        limit: 1,
+        journalize: true,
+        state: { searchNamePattern: undefined },
         rootViewModelArrayProperty: 'persons',
         propertyMapping: { age: 'birthyear' },
         expander: true
     }
 )
 
-viewModel.user = 'Joe Doe'
-viewModel.saveChanges = viewModel.persons.state.saveChanges
-viewModel.logModels = () => {
-    console.log('ViewModel:', viewModel)
-    console.log('Model:', viewModel.model)
-}
+const viewModel = TemplateEngine.reactive({
+    get user() {
+        return model.user
+    },
 
-const reactiveViewModel = TemplateEngine.reactive(
-    viewModel,
-    document.getElementById('app-template-use')
-)
+    set user(value) {
+        model.user = value
+    },
 
-reactiveViewModel.persons.state.loadData()
+    persons,
+    saveChanges: persons.state.saveChanges,
+
+    logModels() {
+        console.log('ViewModel:', viewModel)
+        console.log('Model:', model)
+    }
+}, document.getElementById('app-template-use'))
+
+viewModel.persons.state.loadData()
