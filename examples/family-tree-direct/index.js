@@ -8,79 +8,8 @@ import DataLoader from '../../src/dataloaders/data-loader.js'
 import ExpandHandler from '../../src/collections/expand-handler.js'
 import { getPersons, savePersons } from './fake-server-data.js'
 
-let model
-const expand = ExpandHandler.create((modelParent) => model.loadServerData(modelParent))
-
-function createState(modelParent = undefined) {
-    const state = {
-        ...Paginator.createState({ limit: 1 }),
-        newPerson: { name: '' }
-    }
-
-    Object.defineProperties(state, {
-        loadNextPage: {
-            value: () => {
-                const modelArray = modelParent?.children ?? model.persons
-
-                model.loadServerData(
-                    modelParent,
-                    modelArray.state.searchNamePattern,
-                    true
-                )
-            }
-        },
-        addNewPerson: {
-            value: () => {
-                const modelArray = modelParent?.children ?? model.persons
-
-                modelArray.data.push(getPersonWithMeta({
-                    id: `new-${Math.random().toString(36).substring(2, 9)}`,
-                    name: state.newPerson.name,
-                    wage: 10,
-                    birthyear: 1996,
-                    address: { street: '', city: '' },
-                    tags: [],
-                    children: []
-                }))
-
-                state.newPerson.name = ''
-            }
-        }
-    })
-
-    return state
-}
-
-function getPersonsWithMeta(persons) {
-    for (let i = 0; i < persons.items.length; i++) {
-        persons.items[i] = getPersonWithMeta(persons.items[i])
-    }
-
-    return persons
-}
-
-function getPersonWithMeta(person) {
-    const personWithMeta = structuredClone(person)
-    const childrenWithMeta = personWithMeta.children.map(getPersonWithMeta)
-    const childrenState = createState(personWithMeta)
-
-    personWithMeta.childrenLoaded = childrenWithMeta.length > 0
-    if (personWithMeta.childrenLoaded) {
-        childrenState.start = childrenWithMeta.length
-        childrenState.hasMore = false
-    }
-    personWithMeta.expanded = personWithMeta.childrenLoaded
-    Object.defineProperty(personWithMeta, 'expand', { value: expand })
-    personWithMeta.children = {
-        data: childrenWithMeta,
-        state: childrenState
-    }
-
-    return personWithMeta
-}
-
 // durch Journal kann man die Änderungen im Model nachvollziehen und speichern
-model = ModelJournal.reactive(TemplateEngine.reactive({
+const modelDefinition = {
     user: 'Joe Doe',
 
     get searchNamePattern() {
@@ -95,12 +24,76 @@ model = ModelJournal.reactive(TemplateEngine.reactive({
         model.loadServerData(undefined, value)
     },
 
-    createState,
-    expand,
+    getPersonWithMeta(person) {
+        const personWithMeta = structuredClone(person)
+        const childrenLoaded = personWithMeta.children.length > 0
 
-    persons: {
-        data: [],
-        state: createState()
+        personWithMeta.childrenLoaded = childrenLoaded
+        personWithMeta.expanded = childrenLoaded
+
+        Object.defineProperty(personWithMeta, 'expand', {
+            value: ExpandHandler.create((modelParent) => model.loadServerData(modelParent))
+        })
+        
+        personWithMeta.children = this.getModelArray(personWithMeta.children, personWithMeta)
+
+        if (childrenLoaded) {
+            personWithMeta.children.state.start = personWithMeta.children.data.length
+            personWithMeta.children.state.hasMore = false
+        }
+
+        return personWithMeta
+    },
+
+    getModelArray(persons = [], modelParent = undefined) {
+        const state = {
+            ...Paginator.createState({ limit: 1 }),
+            newPerson: { name: '' }
+        }
+
+        const modelArray = {
+            data: persons.map((person) => this.getPersonWithMeta(person)),
+            state
+        }
+
+        Object.defineProperties(state, {
+            loadNextPage: {
+                value: () => model.loadServerData(
+                    modelParent,
+                    state.searchNamePattern,
+                    true
+                )
+            },
+            addNewPerson: {
+                value: () => {
+                    modelArray.data.push(this.getPersonWithMeta({
+                        id: `new-${Math.random().toString(36).substring(2, 9)}`,
+                        name: state.newPerson.name,
+                        wage: 10,
+                        birthyear: 1996,
+                        address: { street: '', city: '' },
+                        tags: [],
+                        children: []
+                    }))
+
+                    state.newPerson.name = ''
+                }
+            }
+        })
+
+        return modelArray
+    },
+
+    toServerPerson(person) {
+        return {
+            id: person.id,
+            name: person.name,
+            wage: Number(person.wage),
+            birthyear: Number(person.birthyear),
+            address: person.address,
+            tags: person.tags.data ?? person.tags,
+            children: person.children.data.map((child) => this.toServerPerson(child))
+        }
     },
 
     loadServerData(
@@ -118,11 +111,11 @@ model = ModelJournal.reactive(TemplateEngine.reactive({
         const loadPage = append ? Paginator.loadNextPage : Paginator.loadFirstPage
 
         return loadPage(state, async (start, limit) => {
-            const persons = getPersons(modelParent?.id, searchNamePattern, start, limit)
-            const result = getPersonsWithMeta(persons)
+            const result = getPersons(modelParent?.id, state.searchNamePattern, start, limit)
+            const personsWithMeta = result.items.map((person) => this.getPersonWithMeta(person))
 
             DataLoader.loadData(
-                result.items,
+                personsWithMeta,
                 modelArray.data,
                 append
             )
@@ -138,26 +131,20 @@ model = ModelJournal.reactive(TemplateEngine.reactive({
             return
         }
 
-        savePersons(model.persons.data.map(toServerPerson))
+        savePersons(model.persons.data.map((person) => this.toServerPerson(person)))
         journal.clear()
     },
 
     logModels() {
         console.log('Model:', model)
     }
+}
 
-}, document.getElementById('app-template-use')))
+modelDefinition.persons = modelDefinition.getModelArray()
+
+const model = ModelJournal.reactive(TemplateEngine.reactive(
+    modelDefinition,
+    document.getElementById('app-template-use')
+))
 
 model.loadServerData()
-
-function toServerPerson(person) {
-    return {
-        id: person.id,
-        name: person.name,
-        wage: Number(person.wage),
-        birthyear: Number(person.birthyear),
-        address: person.address,
-        tags: person.tags.data ?? person.tags,
-        children: person.children.data.map(toServerPerson)
-    }
-}
