@@ -1,20 +1,13 @@
-// Model: Ausschnitt der Daten, die vom Server kommen würden (wenn vom Server geladen wird, ändert sich auch Model)
-// ViewModel: für View aufbereitete Daten
+import Paginator from '../collections/paginator.js'
+import MVVMDataLoader from '../dataloaders/mvvm-data-loader.js'
 
-import TemplateEngine from '../../src/template-engine.js'
-import ViewModelArray from '../../src/model/viewmodel-array.js'
-import X from '../../src/x/x.js'
-import Paginator from '../../src/collections/paginator.js'
-import MVVMDataLoader from '../../src/dataloaders/mvvm-data-loader.js'
-import ExpandHandler from '../../src/collections/expand-handler.js'
-import ModelJournal from '../../src/reactivity/model-journal.js'
-import { getPersons, savePersons } from './fake-server-data.js'
+const X = (function () {
 
-// durch Journal kann man die Änderungen im Model nachvollziehen und speichern
-const model = ModelJournal.reactive({
-    user: 'Joe Doe',
-    persons: []
-})
+    function get(data) {
+        //TODO: das alles als MVVMTreeController kapseln, expand usw. sollen dabei keine Actions darstellen
+        /*return {
+
+            const model = ModelJournal.reactive(data)
 
 const viewModel = TemplateEngine.reactive({
     get user() {
@@ -34,7 +27,7 @@ const viewModel = TemplateEngine.reactive({
         // sowohl Model als auch ViewModel werden aktualisiert
         // das Model soll sich auch ändern, weil die Daten vom Server kommen
         // würden wir nur die bereits gefetchten Daten filtern, sollte sich nur das ViewModel ändern
-        X.loadData(undefined, viewModel.persons, getPersons, { searchNamePattern: value }, { })
+        viewModel.loadServerData(undefined, undefined, value)
     },
 
     transform(personModelItem) {
@@ -65,8 +58,7 @@ const viewModel = TemplateEngine.reactive({
             // nächsten Expand durch einen erneuten Serverabruf überschrieben werden.
             expanded: childrenLoaded,
             childrenLoaded,
-            expand: ExpandHandler.create((viewModelParent) =>
-                X.loadData(viewModelParent, viewModel.persons, getPersons, { searchNamePattern: ''}, {})),
+            expand: ExpandHandler.create((viewModelParent) => X.loadData(viewModelParent, viewModel.persons, getPersons, { searchNamePattern: ''})),
             tagsVisible: false,
             showTags: (_, viewModelParent) => viewModelParent.tagsVisible = !viewModelParent.tagsVisible,
             addTag: (_, viewModelParent) => 
@@ -100,14 +92,12 @@ const viewModel = TemplateEngine.reactive({
         const state = {
             ...Paginator.createState({ limit: 1 }),
             newPerson: { name: '' },
-            loadNextPage: (_, viewModelItem) => 
-                X.loadData(
-                    modelItem ? viewModelItem : undefined,
-                    viewModel.persons,
-                    getPersons,
-                    { searchNamePattern: state.searchNamePattern },
-                    { append: true }
-                ),
+            loadNextPage: (_, viewModelItem) => viewModel.loadServerData(
+                modelItem ? viewModelItem : undefined,
+                modelItem,
+                state.searchNamePattern,
+                true
+            ),
             addNewPerson: () => {
                 viewModelArray.data.push({
                         id: `new-${Math.random().toString(36).substring(2, 9)}`,
@@ -165,4 +155,45 @@ const viewModel = TemplateEngine.reactive({
     }
 }, document.getElementById('app-template-use'))
 
-X.loadData(undefined, viewModel.persons, getPersons, { searchNamePattern: '' }, { childrenArrayName: 'children' })
+X.loadData(undefined, viewModel.persons, getPersons, { searchNamePattern: '' }, { childrenArrayName: 'children' })*/
+    }
+
+    async function loadData(
+        viewModelParent = undefined,
+        rootViewModelArray = undefined,
+        fetch = undefined,
+        fetchOptions = {},
+        options
+    ) {
+        const {
+            childrenArrayName = 'children'
+        } = options
+
+        const viewModelArray = viewModelParent?.[childrenArrayName] ?? rootViewModelArray
+        const state = viewModelArray.state
+
+        if (!options.append) {
+            state.fetchOptions = fetchOptions
+        }
+
+        const loadPage = options.append ? Paginator.loadNextPage : Paginator.loadFirstPage
+
+        return loadPage(state, async (start, limit) => {
+            const result = await fetch(viewModelParent?.__modelItem__?.id, state.fetchOptions, start, limit)
+
+            MVVMDataLoader.loadData(
+                result.items,
+                viewModelArray.data,
+                options.append
+            )
+
+            return result
+        })
+    }
+
+    return {
+        loadData
+    }
+})()
+
+export default X

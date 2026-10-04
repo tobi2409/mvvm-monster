@@ -134,9 +134,9 @@ function getSearchResultTree(searchNamePattern) {
         .map((row) => personsById.get(row.id))
 }
 
-export function getPersons(parentId = null, searchNamePattern = undefined, start = 0, limit = 1) {
-    const persons = searchNamePattern?.trim()
-        ? getSearchResultTree(searchNamePattern.trim())
+export function getPersons(parentId = null, fetchOptions = {}, start = 0, limit = 1) {
+    const persons = fetchOptions?.searchNamePattern?.trim()
+        ? getSearchResultTree(fetchOptions.searchNamePattern.trim())
         : (parentId === null
         ? database.exec('SELECT * FROM persons WHERE parentId IS NULL')
         : database.exec('SELECT * FROM persons WHERE parentId = ?', [parentId]))
