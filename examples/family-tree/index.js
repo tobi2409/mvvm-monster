@@ -38,9 +38,8 @@ const viewModel = TemplateEngine.reactive({
     },
 
     transform(personModelItem) {
-        const childrenLoaded = personModelItem.children.length > 0
 
-        return {
+        return X._transform(personModelItem, () => ({
             id: personModelItem.id,
             name: personModelItem.name,
             wage: `${personModelItem.wage} USD`,
@@ -49,50 +48,32 @@ const viewModel = TemplateEngine.reactive({
                 street: `${personModelItem.address?.street} - viewModel` || '',
                 city: `${personModelItem.address?.city} - viewModel` || ''
             },
-            // durch ViewModelArray.get wird in reaktiver Engine für tags ViewModelArrayConfig erstellt,
-            // und daher findet ModelSynchronization inklusive reverseTransform statt
-            // -> Tags beim reverseTransform vom Parent können daher leer sein
             tags: ViewModelArray.get(
                 personModelItem.tags || [],
                 (tagModelItem) => ({ name: `${tagModelItem.name} - viewModel` }),
                 (tagViewModelItem) => ({ name: () => tagViewModelItem.name.slice(0, -12) })
             ),
-            // siehe Tags
-            children: this.getViewModelArray(personModelItem.children, personModelItem),
-            // Bei Suchergebnissen werden die Parents inklusive ihrer Trefferpfade
-            // geliefert. Diese Pfade müssen direkt geöffnet und als geladen markiert
-            // werden, damit tiefer liegende Treffer sichtbar sind und nicht beim
-            // nächsten Expand durch einen erneuten Serverabruf überschrieben werden.
-            expanded: childrenLoaded,
-            childrenLoaded,
-            expand: ExpandHandler.create((viewModelParent) =>
-                X.loadData(viewModelParent, viewModel.persons, getPersons, { searchNamePattern: ''}, {})),
             tagsVisible: false,
             showTags: (_, viewModelParent) => viewModelParent.tagsVisible = !viewModelParent.tagsVisible,
             addTag: (_, viewModelParent) => 
                 // kein preparedViewModelItem nötig, da keine fachlich unabhängigen Strukturen (expand) vorhanden
-                viewModelParent.tags.data.push({ name: 'New Tag - viewModel' })
-        }
+                viewModelParent.tags.data.push({ name: 'New Tag - viewModel' }),
+            children: this.getViewModelArray(personModelItem.children, personModelItem)
+        }), getPersons, viewModel.persons)
+
     },
 
     reverseTransform(personViewModelItem, modelItem) {
-        return {
-            id: () => personViewModelItem.id,
-            name: () => personViewModelItem.name,
-            wage: () => personViewModelItem.wage.slice(0, -4), // TODO: Input validation, Convert to number
-            birthyear: () => new Date().getFullYear() - personViewModelItem.age,
+        return X._reverseTransform(personViewModelItem, modelItem, (viewModelItem, modelItem) => ({
+            id: () => viewModelItem.id,
+            name: () => viewModelItem.name,
+            wage: () => viewModelItem.wage.slice(0, -4), // TODO: Input validation, Convert to number
+            birthyear: () => new Date().getFullYear() - viewModelItem.age,
             address: () => ({
-                street: () => personViewModelItem.address?.street.slice(0, -12),
-                city: () => personViewModelItem.address?.city.slice(0, -12),
-            }),
-            // Enthält ein neu hinzugefügtes, vorbereitetes Parent-Item bereits Children,
-            // müssen diese hier rekursiv zurücktransformiert werden. prepareItem erzeugt
-            // zuerst das vollständige Model-Item und transformiert erst danach das ViewModel;
-            // mit [] würden mitgelieferte Children dabei verworfen. [] ist nur passend,
-            // wenn die Children anschließend separat über children.data eingefügt werden.
-            children: () => []
-            //children: () => personViewModelItem.children.map(viewModelChild => this.reverseTransform(viewModelChild))
-        }
+                street: () => viewModelItem.address?.street.slice(0, -12),
+                city: () => viewModelItem.address?.city.slice(0, -12),
+            })
+        }))
     },
 
     // TODO: markRecursive
