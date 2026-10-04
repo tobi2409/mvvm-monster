@@ -11,6 +11,8 @@ describe('ViewModelArray.get', () => {
 
         assert.equal(arr.data[0].label, 'ALICE')
         assert.equal(arr.data[1].label, 'BOB')
+        assert.strictEqual(arr.data[0].__modelItem__, source[0])
+        assert.strictEqual(arr.data[1].__modelItem__, source[1])
     })
 
     test('returns same viewModelArray instance for same source array', () => {
@@ -73,7 +75,9 @@ describe('ViewModelArray.get', () => {
 
         assert.deepEqual(modelItem, { name: 'Alice', children: [{ name: 'Bob' }] })
         assert.equal(viewModelItem.label, 'ALICE')
+        assert.strictEqual(viewModelItem.__modelItem__, modelItem)
         assert.equal(viewModelItem.children.data[0].label, 'Bob')
+        assert.strictEqual(viewModelItem.children.data[0].__modelItem__, modelItem.children[0])
         assert.deepEqual(source, [])
         assert.equal(arr.data.length, 0)
     })

@@ -29,6 +29,7 @@ test('loads data into model and transformed view model arrays', async () => {
 
     assert.deepEqual(modelArray, [{ id: 1, name: 'alpha' }])
     assert.deepEqual(viewModelArray, [{ id: 1, label: 'ALPHA' }])
+    assert.strictEqual(viewModelArray[0].__modelItem__, modelArray[0])
     assert.equal(JournalControl.isJournalingDisabled(), false)
     assert.equal(ModelSynchronization.isModelSynchronizationDisabled(), false)
 })
@@ -54,4 +55,6 @@ test('loadData appends model and transformed view model items', async () => {
         { id: 1, name: 'ALPHA' },
         { id: 2, name: 'BETA' }
     ])
+    
+    assert.strictEqual(viewModelArray[1].__modelItem__, modelArray[1])
 })

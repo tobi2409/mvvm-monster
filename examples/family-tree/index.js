@@ -160,7 +160,7 @@ const viewModel = TemplateEngine.reactive({
         const loadPage = append ? Paginator.loadNextPage : Paginator.loadFirstPage
 
         return loadPage(state, async (start, limit) => {
-            const result = getPersons(modelParent?.id, state.searchNamePattern, start, limit)
+            const result = getPersons(viewModelParent?.__modelItem__?.id, state.searchNamePattern, start, limit)
 
             MVVMDataLoader.loadData(
                 result.items,

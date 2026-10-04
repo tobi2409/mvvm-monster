@@ -7,6 +7,7 @@
 // after array operations like splice/reindex.
 
 import ViewModelItemPreparation from './viewmodel-item-preparation.js'
+import ViewModelItemCache from './viewmodel-item-cache.js'
 
 const mappedViewModelArrayCache = new WeakMap()
 
@@ -37,11 +38,11 @@ const ViewModelArray = (function () {
 
         if (!viewModelArray) {
             const data = modelArray.map((item, index) => {
-                let result = ViewModelItemPreparation.getViewModelItem(item)
+                let result = ViewModelItemCache.getViewModelItem(item)
 
                 if (!result) {
                     result = transform(item, index)
-                    ViewModelItemPreparation.cacheItems(item, result)
+                    ViewModelItemCache.cacheItem(item, result)
                 }
 
                 return result
