@@ -4,7 +4,7 @@ import MVVMDataLoader from '../dataloaders/mvvm-data-loader.js'
 const X = (function () {
 
     function get(data) {
-        //TODO: das alles als MVVMTreeController kapseln, expand usw. sollen dabei keine Actions darstellen
+        //TODO: das alles als MVVMTreeController als Object kapseln, expand usw. sollen dabei keine Actions darstellen
         /*return {
 
             const model = ModelJournal.reactive(data)
