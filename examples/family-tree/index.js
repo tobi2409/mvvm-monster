@@ -16,44 +16,46 @@ const model = ModelJournal.reactive({
 const fetchOptions = { searchNamePattern: '' }
 let viewModel
 
+const dataController = MVVMDataController.create(
+    (modelItem) => viewModel.transform(modelItem),
+    (viewModelItem, modelItem) => viewModel.reverseTransform(viewModelItem, modelItem),
+    (modelParent, options, start, limit) =>
+        getPersons(modelParent?.id ?? null, options, start, limit),
+    fetchOptions,
+    {
+        limit: 1,
+        propertyMapping: { age: 'birthyear' },
+        model,
+        persist: savePersons,
+        customState: ({ viewModelArray }) => ({
+            newPerson: { name: '' },
+            loadNextPage: (_, viewModelParent) => {
+                const parent = viewModelParent?.__modelItem__ ? viewModelParent : undefined
+                return viewModel.dataController.loadNextPage(parent)
+            },
+            addNewPerson: () => {
+                const state = viewModelArray.state
+
+                viewModelArray.data.push({
+                    id: `new-${Math.random().toString(36).substring(2, 9)}`,
+                    name: state.newPerson.name,
+                    wage: '10 USD',
+                    age: 30,
+                    address: { street: '', city: '' },
+                    tags: [],
+                    children: []
+                }, { extraArrayParams: { preparedViewModelItem: true } })
+
+                viewModelArray.data.at(-1).childrenLoaded = true
+                state.newPerson.name = ''
+            }
+        })
+    }
+)
+
 viewModel = TemplateEngine.reactive({
-    
-    dataController: MVVMDataController.create(
-        (modelItem) => viewModel.transform(modelItem),
-        (viewModelItem, modelItem) => viewModel.reverseTransform(viewModelItem, modelItem),
-        (modelParent, options, start, limit) =>
-            getPersons(modelParent?.id ?? null, options, start, limit),
-        fetchOptions,
-        {
-            limit: 1,
-            propertyMapping: { age: 'birthyear' },
-            model,
-            persist: savePersons,
-            customState: ({ viewModelArray }) => ({
-                newPerson: { name: '' },
-                loadNextPage: (_, viewModelParent) => {
-                    const parent = viewModelParent?.__modelItem__ ? viewModelParent : undefined
-                    return viewModel.dataController.loadNextPage(parent)
-                },
-                addNewPerson: () => {
-                    const state = viewModelArray.state
 
-                    viewModelArray.data.push({
-                        id: `new-${Math.random().toString(36).substring(2, 9)}`,
-                        name: state.newPerson.name,
-                        wage: '10 USD',
-                        age: 30,
-                        address: { street: '', city: '' },
-                        tags: [],
-                        children: []
-                    }, { extraArrayParams: { preparedViewModelItem: true } })
-
-                    viewModelArray.data.at(-1).childrenLoaded = true
-                    state.newPerson.name = ''
-                }
-            })
-        }
-    ),
+    dataController: dataController,
 
     get user() {
         return model.user
