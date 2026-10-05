@@ -16,30 +16,9 @@ const model = ModelJournal.reactive({
     persons: []
 })
 
-const viewModel = TemplateEngine.reactive({
-    get user() {
-        return model.user
-    },
-
-    set user(value) {
-        model.user = value
-    },
-
-    get searchNamePattern() {
-        return this._searchNamePattern || ''
-    },
-
-    set searchNamePattern(value) {
-        this._searchNamePattern = value
-        // sowohl Model als auch ViewModel werden aktualisiert
-        // das Model soll sich auch ändern, weil die Daten vom Server kommen
-        // würden wir nur die bereits gefetchten Daten filtern, sollte sich nur das ViewModel ändern
-        X.loadData(undefined, viewModel.persons, getPersons, { searchNamePattern: value }, { })
-    },
-
-    transform(personModelItem) {
-
-        return X._transform(personModelItem, () => ({
+const x = new X({
+    rootModelArray: model.persons,
+    modelTransform: (personModelItem) => ({
             id: personModelItem.id,
             name: personModelItem.name,
             wage: `${personModelItem.wage} USD`,
@@ -58,13 +37,9 @@ const viewModel = TemplateEngine.reactive({
             addTag: (_, viewModelParent) => 
                 // kein preparedViewModelItem nötig, da keine fachlich unabhängigen Strukturen (expand) vorhanden
                 viewModelParent.tags.data.push({ name: 'New Tag - viewModel' }),
-            children: this.getViewModelArray(personModelItem.children, personModelItem)
-        }), getPersons, viewModel.persons)
-
-    },
-
-    reverseTransform(personViewModelItem, modelItem) {
-        return X._reverseTransform(personViewModelItem, modelItem, (viewModelItem, modelItem) => ({
+            children: x.getViewModelArray(personModelItem.children, personModelItem)
+        }),
+    reverseModelTransform: (viewModelItem, modelItem) => ({
             id: () => viewModelItem.id,
             name: () => viewModelItem.name,
             wage: () => viewModelItem.wage.slice(0, -4), // TODO: Input validation, Convert to number
@@ -73,12 +48,71 @@ const viewModel = TemplateEngine.reactive({
                 street: () => viewModelItem.address?.street.slice(0, -12),
                 city: () => viewModelItem.address?.city.slice(0, -12),
             })
-        }))
+        }),
+    fetch: getPersons,
+    options: { limit: 1 }
+})
+
+await x.loadData()
+
+console.log(x.getViewModelArray(model.persons))
+
+const viewModel = TemplateEngine.reactive({
+    get user() {
+        return model.user
+    },
+    
+    set user(value) {
+        model.user = value
     },
 
+    get searchNamePattern() {
+        return this._searchNamePattern || ''
+    },
+
+    set searchNamePattern(value) {
+        this._searchNamePattern = value
+        // sowohl Model als auch ViewModel werden aktualisiert
+        // das Model soll sich auch ändern, weil die Daten vom Server kommen
+        // würden wir nur die bereits gefetchten Daten filtern, sollte sich nur das ViewModel ändern
+        X.loadData(undefined, viewModel.persons, getPersons, { searchNamePattern: value }, { })
+    },
+    
+    personController: x,
+    persons: x.getViewModelArray(model.persons)
+}, document.getElementById('app-template-use'))
+
+
+/*const viewModel = TemplateEngine.reactive({
     // TODO: markRecursive
     getViewModelArray(modelArray, modelItem = undefined) {
-        const state = {
+        const viewModelArray = X.getViewModelArray(modelArray, modelItem, { limit: 1 })
+
+        viewModelArray.state.newPerson = { name: '' }
+
+        viewModelArray.state.addNewPerson = () => {
+            viewModelArray.data.push({
+                    id: `new-${Math.random().toString(36).substring(2, 9)}`,
+                    name: viewModelArray.state.newPerson.name,
+                    wage: '10 USD',
+                    age: 30,
+                    address: { street: '', city: '' },
+                    tags: [],
+                    children: []
+                },
+                { extraArrayParams: { preparedViewModelItem: true } }
+            )
+
+            viewModelArray.data.at(-1).childrenLoaded = true
+
+            viewModelArray.state.newPerson.name = ''
+        }
+
+        return viewModelArray
+    }
+*/
+
+        /*const state = {
             ...Paginator.createState({ limit: 1 }),
             newPerson: { name: '' },
             loadNextPage: (_, viewModelItem) => 
@@ -146,4 +180,4 @@ const viewModel = TemplateEngine.reactive({
     }
 }, document.getElementById('app-template-use'))
 
-X.loadData(undefined, viewModel.persons, getPersons, { searchNamePattern: '' }, { childrenArrayName: 'children' })
+X.loadData(undefined, viewModel.persons, getPersons, { searchNamePattern: '' }, { childrenArrayName: 'children' })*/

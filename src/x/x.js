@@ -3,96 +3,135 @@ import MVVMDataLoader from '../dataloaders/mvvm-data-loader.js'
 import ExpandHandler from '../collections/expand-handler.js'
 import ViewModelArray from '../model/viewmodel-array.js'
 
-const X = (function () {
+class X {
+    constructor({
+        rootModelArray,
+        modelTransform,
+        reverseModelTransform,
+        fetch,
+        fetchOptions = {},
+        propertyMapping = {},
+        options = {}
+    }) {
+        if (!Array.isArray(rootModelArray)) {
+            throw new TypeError('X expected "rootModelArray" to be an array')
+        }
 
-    /*function create(data, transform, reverseTransform, options) {
-        const limit = options?.limit ?? 50
+        if (typeof modelTransform !== 'function') {
+            throw new TypeError('X expected "modelTransform" to be a function')
+        }
 
-        //TODO: das alles als MVVMTreeController als Object kapseln, expand usw. sollen dabei keine Actions darstellen
+        if (typeof reverseModelTransform !== 'function') {
+            throw new TypeError('X expected "reverseModelTransform" to be a function')
+        }
+
+        if (typeof fetch !== 'function') {
+            throw new TypeError('X expected "fetch" to be a function')
+        }
+
+        this.modelTransform = modelTransform
+        this.reverseModelTransform = reverseModelTransform
+        this.fetch = fetch
+        this.fetchOptions = fetchOptions
+        this.propertyMapping = propertyMapping
+        this.options = {
+            childrenArrayName: 'children',
+            limit: 50,
+            ...options
+        }
+        this.rootViewModelArray = this.getViewModelArray(rootModelArray)
+    }
+
+    transform(modelItem) {
+        const { childrenArrayName } = this.options
+        const children = modelItem?.[childrenArrayName]
+
+        if (!Array.isArray(children)) {
+            throw new TypeError(`X expected modelItem.${childrenArrayName} to be an array`)
+        }
+
+        const childrenLoaded = children.length > 0
+
         return {
-        
-            getViewModelArray(modelArray, modelItem = undefined) {
-                const state = {
-                    ...Paginator.createState({ limit }),
-                    loadNextPage: (viewModelItem) => 
-                        loadData(
-                            modelItem ? viewModelItem : undefined,
-                            viewModel.persons,
-                            getPersons,
-                            { searchNamePattern: state.searchNamePattern },
-                            { append: true }
-                        )
-                }
-
-                const viewModelArray = ViewModelArray.get(
-                    modelArray,
-                    (modelItem) => this._transform(modelItem),
-                    (viewModelItem) => this._reverseTransform(viewModelItem),
-                    { age: 'birthyear' },
-                    state
-                )
-
-                return viewModelArray
-            
-            }
-        }*/
-
-    function _transform(modelItem, transform, fetch, fetchOptions = {}, rootViewModelArray) {
-        const childrenLoaded = modelItem.children.length > 0
-
-        return {
-            ...transform(modelItem),
-            //children: this.getViewModelArray(modelItem.children, modelItem),
+            ...this.modelTransform(modelItem),
+            [childrenArrayName]: this.getViewModelArray(children),
             expanded: childrenLoaded,
             childrenLoaded,
-            expand: ExpandHandler.create((viewModelParent) =>
-                loadData(viewModelParent, rootViewModelArray, fetch, fetchOptions, {}))
+            expand: ExpandHandler.create((viewModelParent) => this.loadData(viewModelParent))
         }
     }
 
-    function _reverseTransform(viewModelItem, modelItem, reverseTransform) {
+    reverseTransform(viewModelItem, modelItem) {
+        const { childrenArrayName } = this.options
+        const children = viewModelItem?.[childrenArrayName]?.data
+
+        if (!Array.isArray(children)) {
+            throw new TypeError(`X expected viewModelItem.${childrenArrayName}.data to be an array`)
+        }
+
         return {
-            ...reverseTransform(viewModelItem, modelItem),
-            children: () => viewModelItem.children.map(viewModelChild => _reverseTransform(viewModelChild, modelItem, reverseTransform))
+            ...this.reverseModelTransform(viewModelItem, modelItem),
+            [childrenArrayName]: () => children.map((viewModelChild) =>
+                this.reverseTransform(viewModelChild, viewModelChild.__modelItem__)
+            )
         }
     }
 
-    async function loadData(
-        viewModelParent = undefined,
-        rootViewModelArray = undefined,
-        fetch = undefined,
-        fetchOptions = {},
-        options
-    ) {
-        const {
-            childrenArrayName = 'children'
-        } = options
+    getViewModelArray(modelArray) {
+        if (!Array.isArray(modelArray)) {
+            throw new TypeError('X.getViewModelArray expected "modelArray" to be an array')
+        }
 
-        const viewModelArray = viewModelParent?.[childrenArrayName] ?? rootViewModelArray
+        const state = {
+            ...Paginator.createState({ limit: this.options.limit }),
+            fetchOptions: this.fetchOptions
+        }
+
+        return ViewModelArray.get(
+            modelArray,
+            (modelItem) => this.transform(modelItem),
+            (viewModelItem, modelItem) => this.reverseTransform(viewModelItem, modelItem),
+            this.propertyMapping,
+            state
+        )
+    }
+
+    async loadData(viewModelParent = undefined, append = false) {
+        const { childrenArrayName } = this.options
+
+        if (viewModelParent !== undefined && !viewModelParent?.__modelItem__) {
+            throw new TypeError('X.loadData expected "viewModelParent" to reference a model item')
+        }
+
+        const viewModelArray = viewModelParent === undefined
+            ? this.rootViewModelArray
+            : viewModelParent[childrenArrayName]
+
+        if (!viewModelArray || !Array.isArray(viewModelArray.data)) {
+            throw new TypeError(`X.loadData expected a ViewModelArray in "${childrenArrayName}"`)
+        }
+
         const state = viewModelArray.state
 
-        if (!options.append) {
-            state.fetchOptions = fetchOptions
+        if (!append) {
+            state.fetchOptions = this.fetchOptions
         }
 
-        const loadPage = options.append ? Paginator.loadNextPage : Paginator.loadFirstPage
+        const loadPage = append ? Paginator.loadNextPage : Paginator.loadFirstPage
 
         return loadPage(state, async (start, limit) => {
-            const result = await fetch(viewModelParent?.__modelItem__?.id, state.fetchOptions, start, limit)
-
-            MVVMDataLoader.loadData(
-                result.items,
-                viewModelArray.data,
-                options.append
+            const result = await this.fetch(
+                viewModelParent?.__modelItem__,
+                state.fetchOptions,
+                start,
+                limit
             )
+
+            MVVMDataLoader.loadData(result.items, viewModelArray.data, append)
 
             return result
         })
     }
-
-    return {
-        loadData, _transform, _reverseTransform
-    }
-})()
+}
 
 export default X
