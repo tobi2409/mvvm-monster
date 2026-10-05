@@ -25,6 +25,27 @@ describe('ModelSynchronization', () => {
         assert.equal(modelItem.age, 20)
     })
 
+    test('maps one view model property to multiple model properties', () => {
+        const modelItem = { firstName: 'Ada', lastName: 'Lovelace' }
+        const viewModelItem = { fullName: 'Grace Hopper' }
+        const viewModelItemConfig = {
+            viewModelItem,
+            modelItem,
+            propertyMapping: { fullName: ['firstName', 'lastName'] },
+            reverseTransform: (item) => {
+                const [firstName, ...lastNameParts] = item.fullName.trim().split(/\s+/)
+                return {
+                    firstName,
+                    lastName: lastNameParts.join(' ')
+                }
+            }
+        }
+
+        ModelSynchronization.updateModelItemByViewModelItem(viewModelItemConfig, ['fullName'])
+
+        assert.deepEqual(modelItem, { firstName: 'Grace', lastName: 'Hopper' })
+    })
+
     test('suppresses model item update inside withoutModelSynchronization scope', async () => {
         const modelItem = { id: 1, name: 'Alice' }
         const viewModelItem = { id: 1, name: 'Bob' }

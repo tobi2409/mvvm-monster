@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Family List</title>
+        <link rel="stylesheet" href="./index.css" />
+    </head>
+    <body>
+        <main id="app"></main>
+
+        <template id="person-list-template">
+            <div class="list-meta"><get>*list.data.length</get> people loaded</div>
+
+            <div class="person-table">
+                <div class="person-row person-header">
+                    <span>Name</span>
+                    <span>Email</span>
+                    <span>Role</span>
+                </div>
+
+                <each of="*list.data" as="person">
+                    <div class="person-row">
+                        <input type="text" bind-input-value="person.fullName" />
+                        <input type="email" bind-input-value="person.email" />
+                        <input type="text" bind-input-value="person.role" />
+                    </div>
+                </each>
+            </div>
+
+            <if test="*list.state.hasMore">
+                <button action-click="*list.state.loadNextPage">Load next page</button>
+            </if>
+        </template>
+
+        <template id="app-template">
+            <section class="list-shell">
+                <header>
+                    <p>MVVMDataController</p>
+                    <h1>Family List</h1>
+                </header>
+
+                <template-use
+                    template-id="person-list-template"
+                    data-list="persons"></template-use>
+
+                <button action-click="logModels">Log model and view model</button>
+            </section>
+        </template>
+
+        <template-use
+            id="app-template-use"
+            template-id="app-template"
+            mount-id="app"></template-use>
+
+        <script type="module" src="./index.js"></script>
+    </body>
+</html>

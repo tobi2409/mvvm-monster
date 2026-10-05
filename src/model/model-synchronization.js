@@ -59,9 +59,10 @@ const ModelSynchronization = (function () {
                 const existingModelItem = viewModelItemConfig.modelItem
 
                 if (existingModelItem && typeof existingModelItem === 'object') {
-                    const currentModelProps = currentViewModelProps.map
-                            ((viewModelProp) => Object.keys(propertyMapping).includes(viewModelProp)
-                            ? propertyMapping[viewModelProp] : viewModelProp)
+                    const currentModelProps = currentViewModelProps.flatMap((viewModelProp) => {
+                        const mappedProps = propertyMapping[viewModelProp] ?? viewModelProp
+                        return Array.isArray(mappedProps) ? mappedProps : [mappedProps]
+                    })
 
                     for (const modelProp of currentModelProps) {
                         KeyResolver.setByPath(modelProp, existingModelItem, KeyResolver.resolve(modelProp, reverseTransformedItem, new Map(), true))

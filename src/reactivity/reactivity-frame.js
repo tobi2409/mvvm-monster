@@ -191,6 +191,23 @@ const ReactivityFrame = (function () {
             onAccessorPropertySet = () => {}
         } = extraReactiveParams
 
+        // A getter can return an object or array that already exists outside this property.
+        // Make that value reactive now, not only when the getter is read later. Otherwise an
+        // external mutation between setup and the next read would bypass the reactive hooks.
+        // Example:
+        //   const items = []
+        //   const viewModel = { get persons() { return { data: items } } }
+        //   makeReactive(viewModel)
+        //   items.push(person) // must notify observers even if viewModel.persons was not read again
+        const initialValue = descriptor.get ? descriptor.get.call(obj) : undefined
+
+        if (initialValue && typeof initialValue === 'object') {
+            makeReactive(initialValue, fullKey, {
+                ...extraReactiveParams,
+                ...getNestedExtraReactiveParams(initialValue, fullKey, extraReactiveParams)
+            })
+        }
+
         Object.defineProperty(obj, prop, {
             get() {
                 const value = descriptor.get ? descriptor.get.call(this) : undefined

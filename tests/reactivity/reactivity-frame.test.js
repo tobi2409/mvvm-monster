@@ -54,6 +54,24 @@ describe('ReactivityFrame', () => {
         ])
     })
 
+    test('instruments an accessor value before the accessor is read again', () => {
+        const items = []
+        const changes = []
+        const data = {
+            get items() {
+                return items
+            }
+        }
+
+        ReactivityFrame.makeReactive(data, '', {
+            onArrayItemsChange: (change) => changes.push(change.action)
+        })
+
+        items.push({ id: 1 })
+
+        assert.deepEqual(changes, ['push'])
+    })
+
     test('passes prepared array changes and recursively handles inserted items', () => {
         const events = []
         const data = { items: [{ id: 'a', name: 'Alice' }] }
