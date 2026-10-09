@@ -33,7 +33,7 @@ const viewModel = TemplateEngine.reactive({
         // sowohl Model als auch ViewModel werden aktualisiert
         // das Model soll sich auch ändern, weil die Daten vom Server kommen
         // würden wir nur die bereits gefetchten Daten filtern, sollte sich nur das ViewModel ändern
-        viewModel.loadServerData(undefined, undefined, value)
+        viewModel.loadServerData(undefined, value)
     },
 
     transform(personModelItem) {
@@ -64,7 +64,7 @@ const viewModel = TemplateEngine.reactive({
             // nächsten Expand durch einen erneuten Serverabruf überschrieben werden.
             expanded: childrenLoaded,
             childrenLoaded,
-            expand: ExpandHandler.create((viewModelParent) => viewModel.loadServerData(viewModelParent, personModelItem)),
+            expand: ExpandHandler.create((viewModelParent) => viewModel.loadServerData(viewModelParent)),
             tagsVisible: false,
             showTags: (_, viewModelParent) => viewModelParent.tagsVisible = !viewModelParent.tagsVisible,
             addTag: (_, viewModelParent) => 
@@ -99,8 +99,7 @@ const viewModel = TemplateEngine.reactive({
             ...Paginator.createState({ limit: 1 }),
             newPerson: { name: '' },
             loadNextPage: (_, viewModelItem) => viewModel.loadServerData(
-                modelItem ? viewModelItem : undefined,
-                modelItem,
+                viewModelItem,
                 state.searchNamePattern,
                 true
             ),
@@ -146,7 +145,6 @@ const viewModel = TemplateEngine.reactive({
 
     async loadServerData(
         viewModelParent = undefined,
-        modelParent = undefined,
         searchNamePattern = undefined,
         append = false
     ) {
@@ -160,7 +158,7 @@ const viewModel = TemplateEngine.reactive({
         const loadPage = append ? Paginator.loadNextPage : Paginator.loadFirstPage
 
         return loadPage(state, async (start, limit) => {
-            const result = getPersons(modelParent?.id, state.searchNamePattern, start, limit)
+            const result = getPersons(viewModelParent?.__modelItem__?.id, state.searchNamePattern, start, limit)
 
             MVVMDataLoader.loadData(
                 result.items,
