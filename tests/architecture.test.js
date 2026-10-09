@@ -10,6 +10,7 @@ const testsRoot = path.join(root, 'tests')
 
 const layers = new Map([
     ['identity/uuid-item-map.js', 0],
+    ['model/viewmodel-item-cache.js', 0],
     ['transforms/reverse-transform-evaluator.js', 0],
     ['dom/dom.js', 0],
     ['dom/node-holders.js', 0],
