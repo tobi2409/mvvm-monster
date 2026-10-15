@@ -25,29 +25,25 @@ const ModelJournal = (function () {
             const journal = new Map()
             journalByData.set(data, journal)
 
-            // Property sets only need their latest value. Array operations retain their
-            // order because later operations depend on the result of earlier operations.
-            function journalizeChange(fullKey, change, retainHistory = false) {
+            function journalizeChange(fullKey, change, id, retainHistory = false) {
                 const changeSnapshot = cloneChange(change)
 
                 const journalEntry = journal.get(fullKey)
 
                 if (journalEntry) {
                     if (retainHistory) {
-                        journalEntry.changes ??= [journalEntry.change]
                         journalEntry.changes.push(changeSnapshot)
                     } else {
-                        delete journalEntry.changes
+                        journalEntry.changes = [changeSnapshot]
                     }
 
-                    journalEntry.change = changeSnapshot
                     return
                 }
 
-                const newJournalEntry = { fullKey, identifierProperty, change: changeSnapshot }
-
-                if (retainHistory) {
-                    newJournalEntry.changes = [changeSnapshot]
+                const newJournalEntry = { fullKey, changes: [changeSnapshot] }
+                
+                if (id !== undefined) {
+                    newJournalEntry.id = id
                 }
 
                 journal.set(fullKey, newJournalEntry)
@@ -69,21 +65,24 @@ const ModelJournal = (function () {
             ReactivityFrame.makeReactive(data, '', {
                 marker: '__journal_reactive__',
                 getArrayItemKey: (item) => item[identifierProperty],
-                onArrayItemsChange: (change) => {
+                getArrayItemExtraReactiveParams: (item) => ({
+                    journalEntryId: item[identifierProperty]
+                }),
+                onArrayItemsChange: (change, _, { journalEntryId }) => {
                     if (!JournalControl.isJournalingDisabled()) {
                         // ReactivityFrame already created this change. For splice it contains:
                         // { fullKey, action: 'splice', startIndex, deleteCount, items }.
-                        journalizeChange(change.fullKey, change, true)
+                        journalizeChange(change.fullKey, change, journalEntryId, true)
                     }
                 },
-                onDataPropertySet: ({ fullKey, newValue }) => {
+                onDataPropertySet: ({ fullKey, newValue, extraReactiveParams }) => {
                     if (!JournalControl.isJournalingDisabled()) {
-                        journalizeChange(fullKey, { operation: 'set', value: newValue })
+                        journalizeChange(fullKey, { operation: 'set', value: newValue }, extraReactiveParams.journalEntryId)
                     }
                 },
-                onAccessorPropertySet: ({ fullKey, newValue }) => {
+                onAccessorPropertySet: ({ fullKey, newValue, extraReactiveParams }) => {
                     if (!JournalControl.isJournalingDisabled()) {
-                        journalizeChange(fullKey, { operation: 'set', value: newValue })
+                        journalizeChange(fullKey, { operation: 'set', value: newValue }, extraReactiveParams.journalEntryId)
                     }
                 }
             })

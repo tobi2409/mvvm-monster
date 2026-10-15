@@ -3,12 +3,12 @@ import assert from 'node:assert/strict'
 import ModelJournal from '../../src/reactivity/model-journal.js'
 
 describe('ModelJournal.reactive', () => {
-    test('includes the identifier property in journal entries', () => {
+    test('includes the current item id in journal entries', () => {
         const data = ModelJournal.reactive({ persons: [{ personId: 'a', name: 'Alice' }] }, 'personId')
 
         data.persons[0].name = 'Alicia'
 
-        assert.equal(ModelJournal.getJournal(data).get('persons.a.name').identifierProperty, 'personId')
+        assert.equal(ModelJournal.getJournal(data).get('persons.a.name').id, 'a')
     })
 
     test('retains repeated splice operations in order', () => {
@@ -38,7 +38,8 @@ describe('ModelJournal.reactive', () => {
                 items: [{ id: 'c', name: 'Carol' }]
             }
         ])
-        assert.deepEqual(journalEntry.change, journalEntry.changes.at(-1))
+        
+        assert.equal('change' in journalEntry, false)
     })
 
     test('refreshes an existing journal entry for repeated changes to the same property', () => {
@@ -52,8 +53,7 @@ describe('ModelJournal.reactive', () => {
         assert.equal(ModelJournal.getJournal(data).size, 1)
         assert.deepEqual(journalEntry, {
             fullKey: 'name',
-            identifierProperty: 'id',
-            change: { operation: 'set', value: 'Tobiasaa' }
+            changes: [{ operation: 'set', value: 'Tobiasaa' }]
         })
     })
 
@@ -69,18 +69,11 @@ describe('ModelJournal.reactive', () => {
         assert.deepEqual(Array.from(ModelJournal.getJournal(data).values()), [
             {
                 fullKey: 'persons.a.profile.name',
-                identifierProperty: 'personId',
-                change: { operation: 'set', value: 'Alicia' }
+                changes: [{ operation: 'set', value: 'Alicia' }],
+                id: 'a'
             },
             {
                 fullKey: 'persons',
-                identifierProperty: 'personId',
-                change: {
-                    fullKey: 'persons',
-                    action: 'push',
-                    items: [{ personId: 'b', profile: { name: 'Bob' } }]
-                },
-                // The "changes" array retains the history of array operations, while "change" reflects the latest operation.
                 changes: [{
                     fullKey: 'persons',
                     action: 'push',
@@ -89,8 +82,8 @@ describe('ModelJournal.reactive', () => {
             },
             {
                 fullKey: 'persons.b.profile.name',
-                identifierProperty: 'personId',
-                change: { operation: 'set', value: 'Bobby' }
+                changes: [{ operation: 'set', value: 'Bobby' }],
+                id: 'b'
             }
         ])
     })
@@ -111,8 +104,8 @@ describe('ModelJournal.reactive', () => {
 
         assert.deepEqual(Array.from(ModelJournal.getJournal(data).values()), [{
             fullKey: 'persons.a.name',
-            identifierProperty: 'id',
-            change: { operation: 'set', value: 'Ally' }
+            changes: [{ operation: 'set', value: 'Ally' }],
+            id: 'a'
         }])
     })
 
@@ -124,8 +117,8 @@ describe('ModelJournal.reactive', () => {
 
         assert.deepEqual(ModelJournal.getJournal(data).get('persons.a.children.b.name'), {
             fullKey: 'persons.a.children.b.name',
-            identifierProperty: 'id',
-            change: { operation: 'set', value: 'Bobby' }
+            changes: [{ operation: 'set', value: 'Bobby' }],
+            id: 'b'
         })
     })
 
@@ -135,7 +128,7 @@ describe('ModelJournal.reactive', () => {
 
         data.persons.push({ id: 'a', children: [], expand })
 
-        const change = ModelJournal.getJournal(data).get('persons').change
+        const change = ModelJournal.getJournal(data).get('persons').changes.at(-1)
         assert.notStrictEqual(change.items[0], data.persons[0])
         assert.deepEqual(change.items[0], { id: 'a', children: [], expand })
         assert.strictEqual(change.items[0].expand, expand)
