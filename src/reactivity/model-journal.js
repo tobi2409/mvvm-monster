@@ -25,17 +25,31 @@ const ModelJournal = (function () {
             const journal = new Map()
             journalByData.set(data, journal)
 
-            function journalizeChange(fullKey, change) {
+            // Property sets only need their latest value. Array operations retain their
+            // order because later operations depend on the result of earlier operations.
+            function journalizeChange(fullKey, change, retainHistory = false) {
                 const changeSnapshot = cloneChange(change)
 
                 const journalEntry = journal.get(fullKey)
 
                 if (journalEntry) {
+                    if (retainHistory) {
+                        journalEntry.changes ??= [journalEntry.change]
+                        journalEntry.changes.push(changeSnapshot)
+                    } else {
+                        delete journalEntry.changes
+                    }
+
                     journalEntry.change = changeSnapshot
                     return
                 }
 
-                const newJournalEntry = { fullKey, change: changeSnapshot }
+                const newJournalEntry = { fullKey, identifierProperty, change: changeSnapshot }
+
+                if (retainHistory) {
+                    newJournalEntry.changes = [changeSnapshot]
+                }
+
                 journal.set(fullKey, newJournalEntry)
             }
 
@@ -57,7 +71,9 @@ const ModelJournal = (function () {
                 getArrayItemKey: (item) => item[identifierProperty],
                 onArrayItemsChange: (change) => {
                     if (!JournalControl.isJournalingDisabled()) {
-                        journalizeChange(change.fullKey, change)
+                        // ReactivityFrame already created this change. For splice it contains:
+                        // { fullKey, action: 'splice', startIndex, deleteCount, items }.
+                        journalizeChange(change.fullKey, change, true)
                     }
                 },
                 onDataPropertySet: ({ fullKey, newValue }) => {
