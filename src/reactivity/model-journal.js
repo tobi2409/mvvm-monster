@@ -22,31 +22,41 @@ const ModelJournal = (function () {
                 throw new TypeError(`[ModelJournal] reactive expected "data" to be an object, got ${data === null ? 'null' : typeof data}`)
             }
 
-            const journal = new Map()
+            const journal = []
             journalByData.set(data, journal)
 
-            function journalizeChange(fullKey, change, id, retainHistory = false) {
+            function journalizeChange(attributeName, change, id) {
                 const changeSnapshot = cloneChange(change)
 
-                const journalEntry = journal.get(fullKey)
+                if (change.operation === 'set') {
+                    const existingEntry = journal.find((entry) => entry.change.operation === 'set'
+                        && entry.attributeName === attributeName
+                        && entry.id === id)
 
-                if (journalEntry) {
-                    if (retainHistory) {
-                        journalEntry.changes.push(changeSnapshot)
-                    } else {
-                        journalEntry.changes = [changeSnapshot]
+                    if (existingEntry) {
+                        existingEntry.change = changeSnapshot
+                        return
                     }
-
-                    return
                 }
 
-                const newJournalEntry = { fullKey, changes: [changeSnapshot] }
+                const journalEntry = { attributeName, change: changeSnapshot }
                 
                 if (id !== undefined) {
-                    newJournalEntry.id = id
+                    journalEntry.id = id
                 }
 
-                journal.set(fullKey, newJournalEntry)
+                journal.push(journalEntry)
+            }
+
+            function getAttributeName(fullKey, id) {
+                if (id === undefined) {
+                    return fullKey
+                }
+
+                const segments = fullKey.split('.')
+                const itemIndex = segments.lastIndexOf(String(id))
+
+                return itemIndex === -1 ? fullKey : segments.slice(itemIndex + 1).join('.')
             }
 
             function cloneChange(value) {
@@ -68,21 +78,24 @@ const ModelJournal = (function () {
                 getArrayItemExtraReactiveParams: (item) => ({
                     journalEntryId: item[identifierProperty]
                 }),
+                // ReactivityFrame already created this change.
+                // For splice it contains: { fullKey, action: 'splice', startIndex, deleteCount, items }
                 onArrayItemsChange: (change, _, { journalEntryId }) => {
                     if (!JournalControl.isJournalingDisabled()) {
-                        // ReactivityFrame already created this change. For splice it contains:
-                        // { fullKey, action: 'splice', startIndex, deleteCount, items }.
-                        journalizeChange(change.fullKey, change, journalEntryId, true)
+                        const { fullKey, ...arrayChange } = change
+                        journalizeChange(getAttributeName(fullKey, journalEntryId), arrayChange, journalEntryId)
                     }
                 },
                 onDataPropertySet: ({ fullKey, newValue, extraReactiveParams }) => {
                     if (!JournalControl.isJournalingDisabled()) {
-                        journalizeChange(fullKey, { operation: 'set', value: newValue }, extraReactiveParams.journalEntryId)
+                        const id = extraReactiveParams.journalEntryId
+                        journalizeChange(getAttributeName(fullKey, id), { operation: 'set', value: newValue }, id)
                     }
                 },
                 onAccessorPropertySet: ({ fullKey, newValue, extraReactiveParams }) => {
                     if (!JournalControl.isJournalingDisabled()) {
-                        journalizeChange(fullKey, { operation: 'set', value: newValue }, extraReactiveParams.journalEntryId)
+                        const id = extraReactiveParams.journalEntryId
+                        journalizeChange(getAttributeName(fullKey, id), { operation: 'set', value: newValue }, id)
                     }
                 }
             })

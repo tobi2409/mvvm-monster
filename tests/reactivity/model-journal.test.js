@@ -8,53 +8,107 @@ describe('ModelJournal.reactive', () => {
 
         data.persons[0].name = 'Alicia'
 
-        assert.equal(ModelJournal.getJournal(data).get('persons.a.name').id, 'a')
+        assert.equal(ModelJournal.getJournal(data)[0].id, 'a')
+        assert.equal(ModelJournal.getJournal(data)[0].attributeName, 'name')
     })
 
     test('retains repeated splice operations in order', () => {
         const data = ModelJournal.reactive({ persons: [
             { id: 'a', name: 'Alice' },
-            { id: 'b', name: 'Bob' }
+            { id: 'b', name: 'Bob', children: [{ id: 'b1', name: 'Bella' }] }
         ] })
 
         data.persons.splice(0, 1)
         data.persons.splice(0, 0, { id: 'c', name: 'Carol' })
+        data.persons[1].children.splice(0, 1)
+        data.persons[1].children.splice(0, 0, { id: 'a2', name: 'Alex' })
 
-        const journalEntry = ModelJournal.getJournal(data).get('persons')
-
-        assert.deepEqual(journalEntry.changes, [
+        assert.deepEqual(ModelJournal.getJournal(data), [
             {
-                fullKey: 'persons',
-                action: 'splice',
-                startIndex: 0,
-                deleteCount: 1,
-                items: []
+                attributeName: 'persons',
+                change: {
+                    action: 'splice',
+                    startIndex: 0,
+                    deleteCount: 1,
+                    items: []
+                }
             },
             {
-                fullKey: 'persons',
-                action: 'splice',
-                startIndex: 0,
-                deleteCount: 0,
-                items: [{ id: 'c', name: 'Carol' }]
+                attributeName: 'persons',
+                change: {
+                    action: 'splice',
+                    startIndex: 0,
+                    deleteCount: 0,
+                    items: [{ id: 'c', name: 'Carol' }]
+                }
+            },
+            {
+                attributeName: 'children',
+                change: {
+                    action: 'splice',
+                    startIndex: 0,
+                    deleteCount: 1,
+                    items: []
+                },
+                id: 'b'
+            },
+            {
+                attributeName: 'children',
+                change: {
+                    action: 'splice',
+                    startIndex: 0,
+                    deleteCount: 0,
+                    items: [{ id: 'a2', name: 'Alex' }]
+                },
+                id: 'b'
             }
         ])
-        
-        assert.equal('change' in journalEntry, false)
     })
 
-    test('refreshes an existing journal entry for repeated changes to the same property', () => {
+    test('keeps the complete nested attribute name when no item id exists', () => {
+        const data = ModelJournal.reactive({ settings: { profile: { name: 'Alice' } } })
+
+        data.settings.profile.name = 'Alicia'
+
+        assert.deepEqual(ModelJournal.getJournal(data), [{
+            attributeName: 'settings.profile.name',
+            change: { operation: 'set', value: 'Alicia' }
+        }])
+    })
+
+    test('keeps only the latest set change to the same property', () => {
         const data = ModelJournal.reactive({ name: 'Tobias' })
         data.name = 'Tobiasa'
-
-        const journalEntry = ModelJournal.getJournal(data).get('name')
         data.name = 'Tobiasaa'
 
-        assert.strictEqual(ModelJournal.getJournal(data).get('name'), journalEntry)
-        assert.equal(ModelJournal.getJournal(data).size, 1)
-        assert.deepEqual(journalEntry, {
-            fullKey: 'name',
-            changes: [{ operation: 'set', value: 'Tobiasaa' }]
-        })
+        assert.deepEqual(ModelJournal.getJournal(data), [{
+            attributeName: 'name',
+            change: { operation: 'set', value: 'Tobiasaa' }
+        }])
+    })
+
+    test('keeps set changes for different item ids separate', () => {
+        const data = ModelJournal.reactive({ persons: [
+            { id: 'a', name: 'Alice' },
+            { id: 'b', name: 'Bob' }
+        ] })
+
+        data.persons[0].name = 'Alicia'
+        data.persons[0].name = 'Ally'
+        data.persons[1].name = 'Bobby'
+
+        assert.deepEqual(ModelJournal.getJournal(data), [
+            {
+                attributeName: 'name',
+                change: { operation: 'set', value: 'Ally' },
+                id: 'a'
+            },
+            {
+                attributeName: 'name',
+                change: { operation: 'set', value: 'Bobby' },
+                id: 'b'
+            }
+        ])
     })
 
     test('journals nested item changes and instruments inserted array items', () => {
@@ -66,23 +120,22 @@ describe('ModelJournal.reactive', () => {
         data.persons.push({ personId: 'b', profile: { name: 'Bob' } })
         data.persons[1].profile.name = 'Bobby'
 
-        assert.deepEqual(Array.from(ModelJournal.getJournal(data).values()), [
+        assert.deepEqual(ModelJournal.getJournal(data), [
             {
-                fullKey: 'persons.a.profile.name',
-                changes: [{ operation: 'set', value: 'Alicia' }],
+                attributeName: 'profile.name',
+                change: { operation: 'set', value: 'Alicia' },
                 id: 'a'
             },
             {
-                fullKey: 'persons',
-                changes: [{
-                    fullKey: 'persons',
+                attributeName: 'persons',
+                change: {
                     action: 'push',
                     items: [{ personId: 'b', profile: { name: 'Bob' } }]
-                }]
+                }
             },
             {
-                fullKey: 'persons.b.profile.name',
-                changes: [{ operation: 'set', value: 'Bobby' }],
+                attributeName: 'profile.name',
+                change: { operation: 'set', value: 'Bobby' },
                 id: 'b'
             }
         ])
@@ -102,9 +155,9 @@ describe('ModelJournal.reactive', () => {
         assert.equal(ModelJournal.isJournalingDisabled(), false)
         data.persons[0].name = 'Ally'
 
-        assert.deepEqual(Array.from(ModelJournal.getJournal(data).values()), [{
-            fullKey: 'persons.a.name',
-            changes: [{ operation: 'set', value: 'Ally' }],
+        assert.deepEqual(ModelJournal.getJournal(data), [{
+            attributeName: 'name',
+            change: { operation: 'set', value: 'Ally' },
             id: 'a'
         }])
     })
@@ -115,9 +168,9 @@ describe('ModelJournal.reactive', () => {
         data.persons[0].children.push({ id: 'b', name: 'Bob', children: [] })
         data.persons[0].children[0].name = 'Bobby'
 
-        assert.deepEqual(ModelJournal.getJournal(data).get('persons.a.children.b.name'), {
-            fullKey: 'persons.a.children.b.name',
-            changes: [{ operation: 'set', value: 'Bobby' }],
+        assert.deepEqual(ModelJournal.getJournal(data).at(-1), {
+            attributeName: 'name',
+            change: { operation: 'set', value: 'Bobby' },
             id: 'b'
         })
     })
@@ -128,7 +181,7 @@ describe('ModelJournal.reactive', () => {
 
         data.persons.push({ id: 'a', children: [], expand })
 
-        const change = ModelJournal.getJournal(data).get('persons').changes.at(-1)
+        const change = ModelJournal.getJournal(data).at(-1).change
         assert.notStrictEqual(change.items[0], data.persons[0])
         assert.deepEqual(change.items[0], { id: 'a', children: [], expand })
         assert.strictEqual(change.items[0].expand, expand)

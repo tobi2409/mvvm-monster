@@ -127,12 +127,12 @@ const modelDefinition = {
     saveChanges() {
         const journal = ModelJournal.getJournal(model)
 
-        if (journal.size === 0) {
+        if (journal.length === 0) {
             return
         }
 
         savePersons(model.persons.data.map((person) => this.toServerPerson(person)))
-        journal.clear()
+        journal.length = 0
     },
 
     logModels() {
