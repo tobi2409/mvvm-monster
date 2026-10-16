@@ -172,14 +172,13 @@ const viewModel = TemplateEngine.reactive({
 
     saveChanges() {
         const journal = ModelJournal.getJournal(model)
-        console.log(journal)
 
         if (journal.length === 0) {
             return
         }
 
         savePersons(model.persons)
-        //journal.length = 0
+        journal.length = 0
     },
 
     logModels() {
